@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello WebSocket</title>
+    <link href="/webjars/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/main.css" rel="stylesheet">
+    <script src="/webjars/jquery/jquery.min.js"></script>
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+    <script src="/app.js"></script>
+</head>
+<body>
+RoomId : {{roomid}} <br>
+UserID : {{userid}}
+<noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
+    enabled. Please enable
+    Javascript and reload this page!</h2></noscript>
+<div id="main-content" class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="connect">WebSocket connection:</label>
+                    <button id="connect" class="btn btn-default" type="submit">Connect</button>
+                    <button id="disconnect" class="btn btn-default" type="submit" disabled="disabled">Disconnect
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="name">What is your name?</label><br>
+                    ROOMID 
+                    <input type="text" id="roomid" class="form-control" placeholder="RoomId..." value = {{roomid}}><br>
+                    CLUBID 
+                    <input type="text" id="clubid" class="form-control" placeholder="ClubId..." value = {{clubid}}><br>
+                    LOGINID
+                    <input type="text" id="userid" class="form-control" placeholder="Userid..." value = {{userid}}><br>
+					MESSAGE
+                    <input type="text" id="message" class="form-control" placeholder="message..."><br>
+	                <button id="send" class="btn btn-default" type="submit">Send</button><br>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+		    <ul class="chat_box">
+		    </ul>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

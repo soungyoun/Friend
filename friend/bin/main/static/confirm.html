@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <meta charset="utf-8" />
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <title>Page Title</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<style>
+@import url('//cdn.rawgit.com/young-ha/webfont-archive/master/css/Godo.css');
+   * {
+      font-family: 'Godo', sans-serif;
+      -ms-overflow-style: none;
+   }
+
+   #button:hover {
+      width : 150px;
+      height : 40px;
+      background: rgb(158, 243, 243);
+      box-shadow: 0 0 20px -2px rgba(0,0,0,0.4);
+   }
+</style>
+<body>
+   <div style="position: absolute;left: 50%;top: 40%;transform: translate(-50%, -50%);text-align: center;">
+      <h1>인증이 완료되었습니다.</h1>
+      <br/>
+      <button onclick="(()=>{window.close()})()" style="position: relative;width : 150px;height : 40px;color: white;background: rgb(110, 224, 224);border-radius: 10px;border: none;font-weight: bold;box-shadow: 0 0 15px -2px rgba(0,0,0,0.4);cursor: pointer;">확인</button>
+   </div>
+</body>
+</html>

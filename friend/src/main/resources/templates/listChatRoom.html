@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>room-list</title>
+</head>
+<body>
+
+	<h1>채팅방 목록(group)  {{loginid}}</h1>
+	<ul>
+	    {{#roomsGroup}}
+	    <li><a href="/ChatRoom?roomid={{roomid}}&clubid={{clubid}}&userid={{loginid}}">[roomid : {{roomid}}]  [roomname : {{roomname}}]  [clubid : {{clubid}}]  </a></li>
+	    {{/roomsGroup}}
+	</ul>
+	<h1>채팅방 목록(personal)  {{loginid}}</h1>
+	<ul>
+	    {{#roomsPersonal}}
+	    <li><a href="/ChatRoom?roomid={{roomid}}&clubid=0&userid={{loginid}}">[roomid : {{roomid}}]  [roomname : {{roomname}}]   </a></li>
+	    {{/roomsPersonal}}
+	</ul>
+
+	<form action="/makeChatRoom" >
+		From userid : <input type="text" name="userid" value="{{loginid}}"> <br>
+		clubid : <input type="text" name="clubid" > <br>
+		To userid : <input type="text" name="touserid"> <br>
+		roomname : <input type="text" name="roomname"> <br>
+		<button type="submit">chatroomMake</button>
+	</form>	
+   
+</body>
+</html>
