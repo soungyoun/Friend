@@ -171,24 +171,29 @@ public class ChatService {
 		chatmsg.setMessage(msg);          //메세지
 		Chatmsg chatMsg =   chatMsgRepository.save(chatmsg);
 		
-		//전송데이타
-		int msgid = chatMsg.getMsgid();
-		Date writedate = chatMsg.getWritedate();
-		Map<String, Object> map = new HashMap<>();
-		map.put("messageid", msgid);
-		map.put("roomid", roomid);
-		map.put("id", fromuserid);
-		map.put("message", msg);
-		map.put("writedate", writedate);
-		map.put("readyn", false);
-		
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("type", "message");
-        resultMap.put("message", map);
-	      
     	//채팅 보낼 멤버 (개인창)
     	List<Integer> listchatuser = ListChatUser(roomid, 0);
     	for (Integer id : listchatuser) {
+			//전송데이타
+			int msgid = chatMsg.getMsgid();
+			Date writedate = chatMsg.getWritedate();
+			Map<String, Object> map = new HashMap<>();
+			map.put("messageid", msgid);
+			map.put("roomid", roomid);
+			map.put("id", fromuserid);
+			map.put("message", msg);
+			map.put("writedate", writedate);
+    		//보낸사람은 readyn을 1로 변경
+    		if (fromuserid == id) {
+    			map.put("readyn", 1);  
+    		}else {
+    			map.put("readyn", 0);  
+    		}
+			
+	        Map<String, Object> resultMap = new HashMap<>();
+	        resultMap.put("type", "message");
+	        resultMap.put("message", map);
+    		
     		template.convertAndSend("/topic/"+id,resultMap );
     	}
     }
