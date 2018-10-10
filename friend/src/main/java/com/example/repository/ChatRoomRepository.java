@@ -13,8 +13,6 @@ import com.example.model.Chatroom;
 public interface ChatRoomRepository extends JpaRepository<Chatroom, Integer>{
 	
 	//개인창리스트
-//	@Query(value="select cr.roomid, cr.roomname, cr.userid from chatroom cr , chatuser cu where cr.roomid = cu.roomid and cr.clubid = 0 and cu.userid = :userid", nativeQuery=true)
-
 	@Query(value="select cu.roomid, cu.userid id, u.name nickname, CONCAT('" + UserFunction.ImgPath + "', i.imgpath) image " + 
 			"	from chatuser cu, user u , " + 
 			"	(select id, imgpath " + 
@@ -31,7 +29,13 @@ public interface ChatRoomRepository extends JpaRepository<Chatroom, Integer>{
 			"	and u.userid = i.id "  , nativeQuery=true)
 	public List<Map<String,Object>> getChatPersonalList(@Param("userid") int userid);
 
-   //그룹창리스트
+	//개인창소켓전송할 유저 리스트
+	@Query(value="select cu.roomid, cu.userid id  " +
+			"  from chatuser cu " + 
+			"  where cu.userid <> :userid and cu.roomid = :roomid "	 , nativeQuery=true)
+	public List<Map<String,Object>> getChatPersonal(@Param("roomid") int roomid, @Param("userid") int userid);
+
+	//그룹창리스트
 	@Query(value="select cr.roomid, cr.roomname, cr.userid, cu.clubid, c.name " + 
 						"	 from chatroom cr , clubuser cu, club c " + 
 						"	where cr.clubid = cu.clubid " + 

@@ -65,18 +65,24 @@ public class ChatService {
 		int fromuserid = Integer.parseInt(obj.getString("token"));  //요청하는 자
 		int  touserid = Integer.parseInt(obj.getString("id"));        //요청 받은자
 		
+		//방저장
 		Chatroom chatroom = new Chatroom();
 		chatroom.setRoomname("개인방");
 		chatroom.setClubid(0);
 		chatroom.setUserid(fromuserid);
 		Chatroom resultroom = chatRoomRepository.save(chatroom);
 
-		//개인방일때
+		//chat유저 저장(개인방일때)
 		SaveChatUser(resultroom.getRoomid(), chatroom.getUserid());
 		SaveChatUser(resultroom.getRoomid(), touserid);
 		
+        
         Map<String, Object> map = new HashMap<>();
 	    map.put("contacts", chatService.ListChatRoom(fromuserid));
+	    
+	    //상대방에게 방추가 소켓 보내기
+	    ChatRoomAdd(resultroom.getRoomid(),fromuserid);
+	    
 	    return map;
 	}
 	
@@ -145,6 +151,37 @@ public class ChatService {
 		}
 		
 		return userFunction.ListToMap(newPersonalList, "id");
+	}
+
+	//방 추가시 소켓 전송
+	public void ChatRoomAdd(int roomid, int userid) {
+		//개인
+		List<Map<String, Object>> PersonalList = chatRoomRepository.getChatPersonal(roomid, userid);  //방번호, 방개설유저
+		Map<String, Object> userInfo  = userRepository.getUserInfo(userid);
+		int id ;
+		String nickName, image;
+
+		nickName = userInfo.get("nickName").toString();
+		image = userInfo.get("image").toString();
+
+		Map<String, Object> map= new HashMap<>(); 
+		map.put("roomid", roomid);
+		map.put("id", userid);
+		map.put("nickName", nickName);
+		map.put("image", image);
+		map.put("online", true);
+
+		Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("type", "contact");
+        resultMap.put("contact", map);
+
+		for (int i = 0 ; i<PersonalList.size(); i++) {
+			id = Integer.parseInt(PersonalList.get(i).get("id").toString());
+			template.convertAndSend("/topic/"+id,resultMap );
+
+		}
+
+
 	}
 
 	//메세지 보내기
@@ -220,13 +257,13 @@ public class ChatService {
 	//채팅읽은 멤버 저장
 	public Boolean SaveChatRead(String json) throws NumberFormatException, JSONException {
 		JSONObject obj = new JSONObject(json);
-		int msgid = Integer.parseInt(obj.getString("msgid"));  // 채팅방id
-		int  userid = Integer.parseInt(obj.getString("userid"));    // 읽은 멤버
+		int roomid = Integer.parseInt(obj.getString("roomid"));  // 채팅방id
+		int  userid = Integer.parseInt(obj.getString("token"));    // 읽은 멤버
 		
 		Chatread chatread = new Chatread();
-		chatread.setMsgid(msgid);
+		chatread.setMsgid(roomid);
 		chatread.setUserid(userid);
-		chatReadRepository.save(chatread);
+		chatReadRepository.chatReadInsert(roomid, userid);
 		return true;
 	}
 	

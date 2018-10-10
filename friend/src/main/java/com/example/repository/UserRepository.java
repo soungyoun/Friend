@@ -19,6 +19,11 @@ public interface UserRepository extends JpaRepository<User, Integer>{
 	@Query(value="select u.email from user u where u.userid=:userid",nativeQuery=true)
 	   public String getUserEmail(@Param("userid") int userid);
 
+	@Query(value="select u.userid, u.name nickname, CONCAT('" + UserFunction.ImgPath + "', i.imgpath) image " + 
+			"	  from user u left join (select id, imgpath from img where gubun = 1 and id = 1 group by id) i on (u.userid = i.id)  " + 
+			"	  where u.userid =:userid" ,nativeQuery=true)
+	   public Map<String, Object> getUserInfo(@Param("userid") int userid);
+	  
 	//최재현
 	   @Query(value="select u.name from user u where u.userid=:userid",nativeQuery=true)
 	   public String getUserName(@Param("userid") int userid);

@@ -37,28 +37,28 @@ public class ChatController {
 	}
 
 	//채팅메시지 읽음 체크
-	@PostMapping("/chatRead")
+	@PostMapping("/message")
 	public ResponseEntity<?> ChatRead(@RequestBody String json) throws JSONException {
 		return new ResponseEntity<>(chatService.SaveChatRead(json), HttpStatus.OK);
 		
 	}
 	
-	//채팅방 리스트 보이기
-	@GetMapping("/listChatRoom")
-	public String listChatRoom(int loginid, Model model) {
-		model.addAttribute("rooms", chatService.ListChatRoom(loginid));
-		model.addAttribute("loginid", loginid);
-		return "listChatRoom";
-	}
-	
-	//채팅방 리스트 보이기 테스트
-	@GetMapping("/listChatRoomTest")
-	public String listChatRoomTest(int loginid, Model model) {
-		model.addAttribute("roomsGroup", chatService.ListChatRoom_group(loginid));
-		model.addAttribute("roomsPersonal", chatService.ListChatRoom_personal(loginid));
-		model.addAttribute("loginid", loginid);
-		return "listChatRoom";
-	}
+//	//채팅방 리스트 보이기
+//	@GetMapping("/listChatRoom")
+//	public String listChatRoom(int loginid, Model model) {
+//		model.addAttribute("rooms", chatService.ListChatRoom(loginid));
+//		model.addAttribute("loginid", loginid);
+//		return "listChatRoom";
+//	}
+//	
+//	//채팅방 리스트 보이기 테스트
+//	@GetMapping("/listChatRoomTest")
+//	public String listChatRoomTest(int loginid, Model model) {
+//		model.addAttribute("roomsGroup", chatService.ListChatRoom_group(loginid));
+//		model.addAttribute("roomsPersonal", chatService.ListChatRoom_personal(loginid));
+//		model.addAttribute("loginid", loginid);
+//		return "listChatRoom";
+//	}
 
 	//멤버 방 입장
 	@GetMapping("/ChatRoom")
