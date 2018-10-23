@@ -394,7 +394,7 @@ public class ClubService {
 	    		 map.put("comments", userFunction.ListToMap(reMap, "id"));
 	    		 
 	    		 Boolean hasMorePages=true;
-	    		 if(noticelist.size()/10+1==page)
+	    		 if(noticelist.size()/20+1==page)
 	    			 hasMorePages=false;
 	    		 resultMap.put("hasMorePages", hasMorePages);
 	    	  Map<String,Object> memberMap=new HashMap<>();
@@ -403,21 +403,10 @@ public class ClubService {
 	    	 
 	    	  usersu=culist.size();
 	    	
-	    		for(int a=0;a<culist.size();a++) {
-	    			Map<String,Object> cuMap=new HashMap<>();
-	    			cuMap.put("id", culist.get(a).getUserid());
-	    			cuMap.put("nickName", userRepository.getUserName(culist.get(a).getUserid()));
-	    			cuMap.put("gender", userRepository.getUser(culist.get(a).getUserid()).getGender());
-	    			cuMap.put("image", imgRepository.getImg(1, culist.get(a).getUserid()));
-	    			cuMap.put("online", false);
-	    			cuList.add(cuMap);
-	    		}
+	    	
 	    		postMap.put(noticelist.get(i).getNoticeid(), map);
 	    	  }
-	    	  resultMap.put("posts", postMap);
-	    	  resultMap.put("memberPages", culist.size()/10+1);
 	    
-	    	  resultMap.put("members", userFunction.ListToMap(cuList, "id"));
 	      }
 	    	  
 	    	  else if(page*20<noticelist.size()) {
@@ -478,23 +467,24 @@ public class ClubService {
 		    	 
 		    	  usersu=culist.size();
 		    	
-		    		for(int a=0;a<culist.size();a++) {
-		    			Map<String,Object> cuMap=new HashMap<>();
-		    			cuMap.put("id", culist.get(a).getUserid());
-		    			cuMap.put("nickName", userRepository.getUserName(culist.get(a).getUserid()));
-		    			cuMap.put("gender", userRepository.getUser(culist.get(a).getUserid()).getGender());
-		    			cuMap.put("image", imgRepository.getImg(1, culist.get(a).getUserid()));
-		    			cuMap.put("online", false);
-		    			cuList.add(cuMap);
-		    		}
+		    	
 		    		postMap.put(noticelist.get(i).getNoticeid(), map);
 		    	  }
-		    	  resultMap.put("posts", postMap);
-		    	  resultMap.put("memberPages", culist.size()/10+1);
 		    
-		    	  resultMap.put("members", userFunction.ListToMap(cuList, "id"));
 		      }
+	    		for(int a=0;a<culist.size();a++) {
+	    			Map<String,Object> cuMap=new HashMap<>();
+	    			cuMap.put("id", culist.get(a).getUserid());
+	    			cuMap.put("nickName", userRepository.getUserName(culist.get(a).getUserid()));
+	    			cuMap.put("gender", userRepository.getUser(culist.get(a).getUserid()).getGender());
+	    			cuMap.put("image", imgRepository.getImg(1, culist.get(a).getUserid()));
+	    			cuMap.put("online", false);
+	    			cuList.add(cuMap);
+	    		}
+	    	  resultMap.put("posts", postMap);
+	    	  resultMap.put("memberPages", culist.size()/10+1);
 	    	  
+	    	  resultMap.put("members", userFunction.ListToMap(cuList, "id"));
 	      }
 	      
 	      resultMap.put("isMyGroup", ismygroup);
@@ -1328,9 +1318,10 @@ public class ClubService {
 	public Map<String,Object> groupMember(int token, int id, int page) {
 		// TODO Auto-generated method stub
 		Map<String,Object> Map=new HashMap<>();
-	
+		Map<String,Object> m=new HashMap<>();
 		List<Clubuser> cu=clubUserRepository.getclubuser(id);
 		List<Map<String,Object>> list=new ArrayList<>();
+		Map<Integer,Object> reMap=new HashMap<>();
 		if(page*10>=cu.size()&&cu.size()>page*10-10) {
 			for(int i=page*10-10;i<cu.size();i++) {
 				Map<String,Object> map=new HashMap<>();
@@ -1340,7 +1331,7 @@ public class ClubService {
 				map.put("gender",userRepository.getUser(userid).getGender());
 				map.put("image", imgRepository.getImg(1,userid));
 				map.put("online", false);
-				list.add(map);
+				reMap.put(userid, map);
 			}
 		}
 		else if(page*10<cu.size()) {
@@ -1352,13 +1343,13 @@ public class ClubService {
 				map.put("gender",userRepository.getUser(userid).getGender());
 				map.put("image", imgRepository.getImg(1,userid));
 				map.put("online", false);
-				list.add(map);
+				reMap.put(userid, map);
 			}
 		}
+		m.put("members", reMap);
 		
 	
-		Map.put("members", userFunction.ListToMap(list, "id"));
-		return Map;
+		return m;
 		
 	}
 	
