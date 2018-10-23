@@ -180,7 +180,7 @@ public class ClubController {
       //그룹 멤버 조회
       @RequestMapping("/g"
       		+ "roup/member")
-      public Map<String,Object> groupMember(int token,int id,int page){
+      public Map<String,Object> groupMember(Integer token,int id,int page){
     	  
     	  return clubService.groupMember(token,id,page);
       }
