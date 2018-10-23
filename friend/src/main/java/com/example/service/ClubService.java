@@ -284,7 +284,7 @@ public class ClubService {
 	      master.put("name", userRepository.getUserName(masterid));
 
 	      imgRepository.getImgyn(2, c.getClubid());
-	      List<Map<String, Object>> imgList = new ArrayList<>();
+	      List<String> imgList = new ArrayList<>();
 	      List<String> imgPathList = new ArrayList<>();
 	      int ismygroup=0;
 	         if(clubUserRepository.isMyClub(c.getClubid(), userid)==null) {
@@ -295,12 +295,11 @@ public class ClubService {
 	         }
 	         imgPathList = imgRepository.getImgpath(2, c.getClubid());
 	      
-	      for (int i = 0; i < imgPathList.size(); i++) {
+	     /* for (int i = 0; i < imgPathList.size(); i++) {
 	         Map<String, Object> imgMap = new HashMap<>();
 	         imgMap.put("image",imgPathList.get(i));
-	         imgMap.put("imgyn", imgRepository.getImgyn(2, c.getClubid()).get(i));
 	         imgList.add(imgMap);
-	      }
+	      }*/
 
 	 
 	      List<Integer> useridList=clubUserRepository.getMemberId(c.getClubid());
@@ -329,7 +328,7 @@ public class ClubService {
 	      groupInfoMap.put("si", c.getCity());
 	      groupInfoMap.put("gu", c.getGu());
 	      groupInfoMap.put("intro", c.getContent());
-	      groupInfoMap.put("images", imgList);
+	      groupInfoMap.put("images", imgPathList);
 	 
 	      Map<String,Object> resultMap=new HashMap<>();
 	      resultMap.put("group", groupInfoMap);
