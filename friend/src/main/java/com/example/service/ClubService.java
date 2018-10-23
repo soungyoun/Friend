@@ -333,6 +333,10 @@ public class ClubService {
 	      Map<String,Object> resultMap=new HashMap<>();
 	      resultMap.put("group", groupInfoMap);
 	      
+	      
+	      
+	      
+	      
 	      //내 그룹일때
 	      if(ismygroup==2) {
 	    	  List<Map<String,Object>> cuList=new ArrayList<>();
@@ -341,7 +345,21 @@ public class ClubService {
 	    	  
 	    	  int usersu=0;
 	    	  List<Clubnotice> noticelist=clubnoticeRepository.getClubnotices(c.getClubid());
-	    	  for(int i=0;i<noticelist.size();i++) {
+	    	  if(page*20>=noticelist.size()&&noticelist.size()>page*20-20) {
+	    	  for(int i=page*20-20;i<noticelist.size();i++) {
+	    			int count=0;
+					List<Feel> flist=feelRepository.liked(3, noticelist.get(i).getNoticeid());
+						for(int k=0;k<flist.size();k++) {
+							if(flist.get(k).getUserid()==userid) {
+								count++;
+							}
+						}
+						boolean liked=false;
+						if(count==1) {
+							liked=true;
+						}
+	    		  
+	    		  
 	    		  Map<String,Object> map=new HashMap<>();
 	    		  Map<String,Object> userMap=new HashMap<>();
 	    		  userMap.put("id", noticelist.get(i).getUserid());
@@ -356,6 +374,7 @@ public class ClubService {
 	    		  map.put("user", userMap);
 	    		  map.put("views", hitRepository.readcounts(3, noticelist.get(i).getNoticeid()));
 	    		  map.put("likes", feelRepository.likes(3, noticelist.get(i).getNoticeid()));
+	    		  map.put("liked", liked);
 	    		  Map<String,Object> comments=new HashMap<>();
 	    		  comments.put("id", 0);
 	    		 List<Noticecom> notice= noticecomRepository.noticecom(noticelist.get(i).getNoticeid());
@@ -399,6 +418,83 @@ public class ClubService {
 	    	  resultMap.put("memberPages", culist.size()/10+1);
 	    
 	    	  resultMap.put("members", userFunction.ListToMap(cuList, "id"));
+	      }
+	    	  
+	    	  else if(page*20<noticelist.size()) {
+	    		  for(int i=page*20-20;i<page*20;i++) {
+	    				int count=0;
+	    				List<Feel> flist=feelRepository.liked(3, noticelist.get(i).getNoticeid());
+	    					for(int k=0;k<flist.size();k++) {
+	    						if(flist.get(k).getUserid()==userid) {
+	    							count++;
+	    						}
+	    					}
+	    					boolean liked=false;
+	    					if(count==1) {
+	    						liked=true;
+	    					}
+	    			  
+	    			  
+	    			  Map<String,Object> map=new HashMap<>();
+		    		  Map<String,Object> userMap=new HashMap<>();
+		    		  userMap.put("id", noticelist.get(i).getUserid());
+		    		  userMap.put("nickName",  userRepository.getUserName(noticelist.get(i).getUserid()));
+		    		  userMap.put("image", imgRepository.getImg(1, noticelist.get(i).getUserid())); //유저이미지
+		    		  
+		    		  map.put("type", noticelist.get(i).getType());
+		    		  map.put("id", noticelist.get(i).getNoticeid());
+		    		  map.put("title", noticelist.get(i).getTitle());
+		    		  map.put("content", noticelist.get(i).getContent());
+		    		  map.put("writedate", noticelist.get(i).getWritedate());
+		    		  map.put("user", userMap);
+		    		  map.put("views", hitRepository.readcounts(3, noticelist.get(i).getNoticeid()));
+		    		  map.put("likes", feelRepository.likes(3, noticelist.get(i).getNoticeid()));
+		    		  map.put("liked", liked);
+		    		  Map<String,Object> comments=new HashMap<>();
+		    		  comments.put("id", 0);
+		    		 List<Noticecom> notice= noticecomRepository.noticecom(noticelist.get(i).getNoticeid());
+		    		 List<Map<String,Object>> reMap=new ArrayList<>();
+		    		 for(int k=0;k<notice.size();k++) {
+		    			 Map<String,Object> coMap=new HashMap<>();
+		    			 Map<String,Object> uMap=new HashMap<>();
+		    			 uMap.put("id", notice.get(k).getUserid());
+		    			 uMap.put("nickName", userRepository.getUserName(notice.get(k).getUserid()));
+		    			 uMap.put("image", imgRepository.getImg(1, notice.get(k).getUserid()));
+		    			 coMap.put("id", notice.get(k).getComid());
+		    			 coMap.put("user", uMap);
+		    			 coMap.put("content",notice.get(k).getContent());
+		    			 coMap.put("writedate", notice.get(k).getWritedate());
+		    			 reMap.add(coMap);
+		    		 }
+		    		 map.put("comments", userFunction.ListToMap(reMap, "id"));
+		    		 
+		    		 Boolean hasMorePages=true;
+		    		 if(noticelist.size()/20+1==page)
+		    			 hasMorePages=false;
+		    		 resultMap.put("hasMorePages", hasMorePages);
+		    	  Map<String,Object> memberMap=new HashMap<>();
+		    	  
+		    	  
+		    	 
+		    	  usersu=culist.size();
+		    	
+		    		for(int a=0;a<culist.size();a++) {
+		    			Map<String,Object> cuMap=new HashMap<>();
+		    			cuMap.put("id", culist.get(a).getUserid());
+		    			cuMap.put("nickName", userRepository.getUserName(culist.get(a).getUserid()));
+		    			cuMap.put("gender", userRepository.getUser(culist.get(a).getUserid()).getGender());
+		    			cuMap.put("image", imgRepository.getImg(1, culist.get(a).getUserid()));
+		    			cuMap.put("online", false);
+		    			cuList.add(cuMap);
+		    		}
+		    		postMap.put(noticelist.get(i).getNoticeid(), map);
+		    	  }
+		    	  resultMap.put("posts", postMap);
+		    	  resultMap.put("memberPages", culist.size()/10+1);
+		    
+		    	  resultMap.put("members", userFunction.ListToMap(cuList, "id"));
+		      }
+	    	  
 	      }
 	      
 	      resultMap.put("isMyGroup", ismygroup);
@@ -1082,6 +1178,18 @@ public class ClubService {
         	 for(int i=0;i<20;i++) {
         		 Map<String,Object> map=new HashMap<>();
 	    		  Map<String,Object> userMap=new HashMap<>();
+	    		  
+	    		  int count=0;
+	    		  List<Feel> flist=feelRepository.liked(3, clubnotice.get(i).getNoticeid());
+					for(int k=0;k<flist.size();k++) {
+						if(flist.get(k).getUserid()==userid) {
+							count++;
+						}
+					}
+					boolean liked=false;
+					if(count==1) {
+						liked=true;
+					}
 	    		  userMap.put("id", clubnotice.get(i).getUserid());
 	    		  userMap.put("nickName",  userRepository.getUserName(clubnotice.get(i).getUserid()));
 	    		  userMap.put("image", imgRepository.getImg(1, clubnotice.get(i).getUserid())); //유저이미지
@@ -1094,7 +1202,7 @@ public class ClubService {
 	    		  map.put("user", userMap);
 	    		  map.put("views", hitRepository.readcounts(3, clubnotice.get(i).getNoticeid()));
 	    		  map.put("likes", feelRepository.likes(3, clubnotice.get(i).getNoticeid()));
-	    		  
+	    		  map.put("liked", liked);
 	    		  Map<String,Object> comments=new HashMap<>();
 	    		  comments.put("id", 0);
 	    		 List<Noticecom> notice= noticecomRepository.noticecom(clubnotice.get(i).getNoticeid());
@@ -1262,10 +1370,21 @@ public class ClubService {
 		List<Clubnotice> clubnotice=clubnoticeRepository.getClubnotices(id);
 		
 		List<Map<String,Object>> maplist=new ArrayList<>();
-	
-		if(page*10>=clubnotice.size()&&clubnotice.size()>page*10-10) {
-			for(int i=page*10-10;i<clubnotice.size();i++) {
-				 Map<String,Object> map=new HashMap<>();
+		
+		if(page*20>=clubnotice.size()&&clubnotice.size()>page*20-20) {
+			for(int i=page*20-20;i<clubnotice.size();i++) {
+				int count=0;
+				List<Feel> flist=feelRepository.liked(3, clubnotice.get(i).getNoticeid());
+					for(int k=0;k<flist.size();k++) {
+						if(flist.get(k).getUserid()==token) {
+							count++;
+						}
+					}
+					boolean liked=false;
+					if(count==1) {
+						liked=true;
+					}
+				Map<String,Object> map=new HashMap<>();
 	    		  Map<String,Object> userMap=new HashMap<>();
 	    		  userMap.put("id", clubnotice.get(i).getUserid());
 	    		  userMap.put("nickName",  userRepository.getUserName(clubnotice.get(i).getUserid()));
@@ -1279,7 +1398,7 @@ public class ClubService {
 	    		  map.put("user", userMap);
 	    		  map.put("views", hitRepository.readcounts(3, clubnotice.get(i).getNoticeid()));
 	    		  map.put("likes", feelRepository.likes(3, clubnotice.get(i).getNoticeid()));
-	    		  
+	    		  map.put("liked", liked);
 	    		  Map<String,Object> comments=new HashMap<>();
 	    		  comments.put("id", 0);
 	    		 List<Noticecom> notice= noticecomRepository.noticecom(clubnotice.get(i).getNoticeid());
@@ -1302,8 +1421,20 @@ public class ClubService {
 			}
 			posts.put("posts",userFunction.ListToMap(maplist, "id"));
 		}
-		else if(page*10<clubnotice.size()) {
-			for(int i=page*10-10;i<page*10;i++) {
+		else if(page*20<clubnotice.size()) {
+			for(int i=page*20-20;i<page*20;i++) {
+				int count=0;
+				List<Feel> flist=feelRepository.liked(3, clubnotice.get(i).getNoticeid());
+					for(int k=0;k<flist.size();k++) {
+						if(flist.get(k).getUserid()==token) {
+							count++;
+						}
+					}
+					boolean liked=false;
+					if(count==1) {
+						liked=true;
+					}
+				
 				 Map<String,Object> map=new HashMap<>();
 	    		  Map<String,Object> userMap=new HashMap<>();
 	    		  userMap.put("id", clubnotice.get(i).getUserid());
@@ -1318,7 +1449,7 @@ public class ClubService {
 	    		  map.put("user", userMap);
 	    		  map.put("views", hitRepository.readcounts(3, clubnotice.get(i).getNoticeid()));
 	    		  map.put("likes", feelRepository.likes(3, clubnotice.get(i).getNoticeid()));
-	    		  
+	    		  map.put("liked", liked);
 	    		  Map<String,Object> comments=new HashMap<>();
 	    		  comments.put("id", 0);
 	    		 List<Noticecom> notice= noticecomRepository.noticecom(clubnotice.get(i).getNoticeid());
@@ -1342,7 +1473,7 @@ public class ClubService {
 		}
 		System.out.println(clubnotice.size());
 		Boolean hasMorePages=true;
-		if(clubnotice.size()/10+1==page)
+		if(clubnotice.size()/20+1==page)
 			hasMorePages=false;
 		posts.put("hasMorePages", hasMorePages);
 	
