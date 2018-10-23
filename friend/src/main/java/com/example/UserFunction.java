@@ -156,10 +156,10 @@ public class UserFunction {
 		   fileUrlPath = "" ;		   
 		   fileName = String.valueOf(System.currentTimeMillis()) + ".jpg";
 		   if (gubun == 1) {
-			   fileUrlPath = fileUrlPath +"fimg/"+ fileName;
+			   fileUrlPath = fileUrlPath +"/fimg/"+ fileName;
 			   fileSavePath="src/main/resources/static/fimg/" + fileName;  //이미지파일 경로  
 		   }else if(gubun == 2){
-			   fileUrlPath = fileUrlPath +"gimg/"+ fileName;
+			   fileUrlPath = fileUrlPath +"/gimg/"+ fileName;
 			   fileSavePath ="src/main/resources/static/gimg/" + fileName;
 		   }
 	      String data = base64.split(",")[1];
