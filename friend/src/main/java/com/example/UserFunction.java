@@ -32,7 +32,7 @@ import com.example.repository.ImgRepository;
 @Component
 public class UserFunction {
 	
-	public final static String ImgPath = "http://localhost:8080/"; 
+	public final static String ImgPath = "http://localhost:8080"; 
 	//public final static String gImgPath = "http://192.168.0.200:8080/"; 
 	@Autowired
 	private ImgRepository imgRepository;
