@@ -881,10 +881,12 @@ public class ClubService {
        
        
          clubinterestRepository.deleteByClubid(clubid);
+         List<Integer> intlist=new ArrayList<>();
          for (int i = 0; i < interests.length(); i++) {
             Clubinterest ci = new Clubinterest();
             ci.setClubid(clubid);
             try {
+            	intlist.add(interests.getInt(i));
 				ci.setCode(interests.getInt(i));
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
@@ -905,7 +907,7 @@ public class ClubService {
          clubMap.put("id",clubid);
          clubMap.put("groupName",groupName);
          clubMap.put("master",masterMap);
-         clubMap.put("interests",interests);
+         clubMap.put("interests",intlist);
          clubMap.put("estDate",c.getStartdate());
          clubMap.put("memberCnt",clubUserRepository.getMemberCount(c.getClubid()));
          clubMap.put("maxMember",c.getMaxcount());
@@ -923,8 +925,11 @@ public class ClubService {
          return reMap;
     
 
-      } 
-      return null;
+      }
+      else {
+    	  
+    	  return null;
+      }
 
    }
 
