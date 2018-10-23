@@ -280,8 +280,8 @@ public class ClubService {
 	       */
 	      int masterid = clubUserRepository.getMaster(seq);
 
-	      master.put("userid", masterid);
-	      master.put("name", userRepository.getUserName(masterid));
+	      master.put("id", masterid);
+	      master.put("nickName", userRepository.getUserName(masterid));
 
 	      imgRepository.getImgyn(2, c.getClubid());
 	      List<String> imgList = new ArrayList<>();
@@ -333,9 +333,12 @@ public class ClubService {
 	      Map<String,Object> resultMap=new HashMap<>();
 	      resultMap.put("group", groupInfoMap);
 	      
-	      
+	      //내 그룹일때
 	      if(ismygroup==2) {
-	    	  Map<String,Object> postMap=new HashMap<>();
+	    	  List<Map<String,Object>> cuList=new ArrayList<>();
+	    	  List<Clubuser> culist=clubUserRepository.getclubuser(c.getClubid());
+	    	  Map<Integer,Object> postMap=new HashMap<>();
+	    	  
 	    	  int usersu=0;
 	    	  List<Clubnotice> noticelist=clubnoticeRepository.getClubnotices(c.getClubid());
 	    	  for(int i=0;i<noticelist.size();i++) {
@@ -379,9 +382,9 @@ public class ClubService {
 	    	  Map<String,Object> memberMap=new HashMap<>();
 	    	  
 	    	  
-	    	  List<Clubuser> culist=clubUserRepository.getclubuser(c.getClubid());
+	    	 
 	    	  usersu=culist.size();
-	    	  List<Map<String,Object>> cuList=new ArrayList<>();
+	    	
 	    		for(int a=0;a<culist.size();a++) {
 	    			Map<String,Object> cuMap=new HashMap<>();
 	    			cuMap.put("id", culist.get(a).getUserid());
@@ -391,12 +394,12 @@ public class ClubService {
 	    			cuMap.put("online", false);
 	    			cuList.add(cuMap);
 	    		}
-	    	  
-	    		resultMap.put("members", userFunction.ListToMap(cuList, "id"));
-	    		resultMap.put("posts", map);
-	    		resultMap.put("memberPages", culist.size()/10+1);
+	    		postMap.put(noticelist.get(i).getNoticeid(), map);
 	    	  }
+	    	  resultMap.put("posts", postMap);
+	    	  resultMap.put("memberPages", culist.size()/10+1);
 	    
+	    	  resultMap.put("members", userFunction.ListToMap(cuList, "id"));
 	      }
 	      
 	      resultMap.put("isMyGroup", ismygroup);
