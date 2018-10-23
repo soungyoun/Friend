@@ -22,8 +22,7 @@ class FeelPK implements Serializable{
 @IdClass(FeelPK.class)
 public class Feel {
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
-    private int gubun; //而⑦뀗痢좉뎄遺� 1.洹몃９,2:洹몃９�븣由�,3:洹몃９�븣由쇰뙎湲�, 4.移쒓뎄',
+    private int gubun; //1.친구, 2.그룹, 3.그룹게시판 4.게시판
 	@Id
     private int id;	//而⑦뀗痢좎쓽id',
 	@Id

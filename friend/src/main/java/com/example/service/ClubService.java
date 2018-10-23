@@ -378,7 +378,6 @@ public class ClubService {
 	    		 if(noticelist.size()/10+1==page)
 	    			 hasMorePages=false;
 	    		 resultMap.put("hasMorePages", hasMorePages);
-	    		 resultMap.put("members", "그룹 멤버 정보");
 	    	  Map<String,Object> memberMap=new HashMap<>();
 	    	  
 	    	  
@@ -696,6 +695,18 @@ public class ClubService {
            Map<String,Object> reMap=new HashMap<>();
            reMap.put("group", clubMap);
           
+           List<Clubuser> culist=clubUserRepository.getclubuser(clubid);
+           List<Map<String,Object>> cuList=new ArrayList<>();
+           for(int a=0;a<culist.size();a++) {
+   			Map<String,Object> cuMap=new HashMap<>();
+   			cuMap.put("id", culist.get(a).getUserid());
+   			cuMap.put("nickName", userRepository.getUserName(culist.get(a).getUserid()));
+   			cuMap.put("gender", userRepository.getUser(culist.get(a).getUserid()).getGender());
+   			cuMap.put("image", imgRepository.getImg(1, culist.get(a).getUserid()));
+   			cuMap.put("online", false);
+   			cuList.add(cuMap);
+   		}
+           reMap.put("members", userFunction.ListToMap(cuList, "id"));
            
            return reMap;
       
@@ -1375,7 +1386,7 @@ public class ClubService {
 		}
 	}
 	
-	public void addComment(int token, int id, String content) {
+	public Map<String,Object> addComment(int token, int id, String content) {
 		// TODO Auto-generated method stub
 	
 		Noticecom nc=new Noticecom();
@@ -1421,7 +1432,7 @@ public class ClubService {
 				commentList.add(map);
 			}
 			reMap.put("comments", userFunction.ListToMap(commentList, "id"));
-		
+		return reMap;
 		}
 }
 

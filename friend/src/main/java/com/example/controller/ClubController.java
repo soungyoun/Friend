@@ -161,7 +161,7 @@ public class ClubController {
     	  }
       }
       //그룹탈퇴
-      @DeleteMapping("/group/request")
+      @PostMapping("/group/leave")
       public ResponseEntity<String> deleteGroup(@RequestBody String json) throws JSONException{
     	  JSONObject obj=new JSONObject(json);
     	  int token=obj.getInt("token");
@@ -178,7 +178,8 @@ public class ClubController {
       }
       
       //그룹 멤버 조회
-      @RequestMapping("/group/member")
+      @RequestMapping("/g"
+      		+ "roup/member")
       public Map<String,Object> groupMember(int token,int id,int page){
     	  
     	  return clubService.groupMember(token,id,page);
@@ -293,8 +294,7 @@ public class ClubController {
 	   int id=obj.getInt("id");
 	   String content=obj.getString("content");
 	   
-	   clubService.addComment(token,id,content);
-	   return null;
+	   return clubService.addComment(token,id,content);
    }
    
    
