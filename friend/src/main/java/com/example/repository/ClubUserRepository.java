@@ -20,7 +20,8 @@ public interface ClubUserRepository extends JpaRepository<Clubuser, Integer>{
    //해당그룹의 유저들 정보
    @Query(value="select c.userid from clubuser c where c.clubid=:clubid",nativeQuery=true)
    public List<Integer> getMemberId(@Param("clubid") int clubid);
-   
+   @Query(value="select * from clubuser where clubid=:clubid",nativeQuery=true)
+   public List<Clubuser> getclubuser(@Param("clubid") int clubid);
    //마스터의 seq값
    @Query(value="select userid from clubuser where clubid=:clubid and auth=1",nativeQuery=true)
    public int getMaster(@Param("clubid") int clubid);
@@ -61,6 +62,9 @@ public interface ClubUserRepository extends JpaRepository<Clubuser, Integer>{
 	@Query(value="select c.clubid,c.name,i.imgpath from club c ,clubuser cu,img i where c.clubid=cu.clubid and cu.userid=:userid and i.gubun=:gubun and c.clubid=i.id group by c.clubid",nativeQuery=true)
 	   public List<Map<String,Object>> getUserClubinfo(@Param("userid")int userid, @Param("gubun")int gubun);
 	
+
+	@Query(value="update clubuser set userstate=3,breakdate=now() where userid=:userid and clubid=:clubid",nativeQuery=true)
+		public void deleteClubUser(@Param("userid")int userid,@Param("clubid")int clubid);
 	
 	
 }

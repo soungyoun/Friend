@@ -14,6 +14,8 @@ class FeelPK implements Serializable{
 	private static final long serialVersionUID = 1L;
     private int gubun; 
     private int id;	
+    private int userid;
+   
 }
 
 @Entity
@@ -21,13 +23,13 @@ class FeelPK implements Serializable{
 public class Feel {
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO)
-    private int gubun; //컨텐츠구분 1.그룹,2:그룹알림,3:그룹알림댓글, 4.친구',
+    private int gubun; //而⑦뀗痢좉뎄遺� 1.洹몃９,2:洹몃９�븣由�,3:洹몃９�븣由쇰뙎湲�, 4.移쒓뎄',
 	@Id
-    private int id;	//컨텐츠의id',
+    private int id;	//而⑦뀗痢좎쓽id',
 	@Id
-    private int userid; //회원id',
-    private int type; //1:좋아요,2:신고하기, 3.조회',
-    private Date writedate;	//작성일자',
+    private int userid; //�쉶�썝id',
+    private int type; //1:醫뗭븘�슂,2:�떊怨좏븯湲�, 3.議고쉶',
+    private Date writedate;	//�옉�꽦�씪�옄',
 	@PrePersist
 	public void beforeDate() {
 		this.writedate = new Date();

@@ -36,16 +36,16 @@ public class FriendService {
    EntityManager entitymanager;
    @Autowired
    private UserFunction userFunction;
-   
+
 // 1-1-4 인기친구
-   public Map<String, Object> popularUsers(){
+   public Map<String, Object> popularUsers() {
       // 인기친구 쿼리
       List<User> userList = userRepository.topFriends();
       // 구분 1: 회원
       final int gubun = 1;
-      
+
       Map<Integer, Object> popUserMap = new HashMap<>();
-      for(User u : userList) {
+      for (User u : userList) {
          Map<String, Object> UserMap = new HashMap<>();
          // userid 맵
          UserMap.put("id", u.getUserid());
@@ -55,26 +55,26 @@ public class FriendService {
          // 구분1, 유저아이디 에 해당하는 imgpath
          // 이미지 맵
          List<String> img = imgRepository.imgpathListByGubunAndId(gubun, u.getUserid());
-      if (!img.isEmpty()) {
-         UserMap.put("image", img.get(0));
-      }else {
-         UserMap.put("image", null);
-      }
+         if (!img.isEmpty()) {
+            UserMap.put("image", img.get(0));
+         } else {
+            UserMap.put("image", null);
+         }
          // 유저아이디:유저정보
          popUserMap.put(u.getUserid(), UserMap);
-            
+
       }
-      
+
       Map<String, Object> popularUsersMap = new HashMap<String, Object>();
       popularUsersMap.put("popularUsers", popUserMap);
-      
+
       return popularUsersMap;
    }
-   
+
 // 3-2
    // 필터 검색
-   public Map<String, Object> SearchFriends(Integer userid, Integer page, Integer si, Integer gu, Integer gender, Integer minAge,
-         Integer maxAge, Integer interest, String keyword) {
+   public Map<String, Object> SearchFriends(Integer userid, Integer page, Integer si, Integer gu, Integer gender,
+         Integer minAge, Integer maxAge, Integer interest, String keyword) {
       // TODO Auto-generated method stub
       CriteriaBuilder builder = entitymanager.getCriteriaBuilder();
       CriteriaQuery<User> query = builder.createQuery(User.class);
@@ -113,23 +113,24 @@ public class FriendService {
          predicates.add(builder.and(builder.in(root.get("userid")).value(sub)));
       }
       // 유저의 닉네임 like검색
-      if(!keyword.equals("")) {
-         predicates.add(builder.like(root.get("name"), "%"+keyword+"%"));
+      if (!keyword.equals("")) {
+         predicates.add(builder.like(root.get("name"), "%" + keyword + "%"));
       }
       query.select(root).where(predicates.toArray(new Predicate[] {}));
       // page당 20명씩 반환
       TypedQuery<User> typedQuery = entitymanager.createQuery(query).setFirstResult(page * 20 - 20).setMaxResults(20);
       List<User> userListPage = typedQuery.getResultList();
-      
+
       // 더 불러올 페이지가 있는지의 여부
       TypedQuery<User> alltypedQuery = entitymanager.createQuery(query);
       List<User> alluserListPage = alltypedQuery.getResultList();
-      Boolean hasMorePages = ((alluserListPage.size() - page*20) > 0) ? true : false;
-      
+      Boolean hasMorePages = ((alluserListPage.size() - page * 20) > 0) ? true : false;
+
       final int gubun = 1;
       Map<String, Object> popularMap = new HashMap<>();
       Map<Object, Object> useridMap = new HashMap<>();
-      
+      List<Integer> index = new ArrayList<>();
+
       // user정보 매핑
       if (!userListPage.isEmpty()) {
          popularMap.put("hasMorePages", hasMorePages);
@@ -139,9 +140,9 @@ public class FriendService {
             userMap.put("nickName", u.getName());
             userMap.put("gender", u.getGender());
             // age 계산
-            if(u.getBirth()!=null) {
+            if (u.getBirth() != null) {
                userMap.put("age", new Date().getYear() - u.getBirth().getYear() + 1);
-            }else {
+            } else {
                userMap.put("age", null);
             }
             userMap.put("si", u.getCity());
@@ -153,12 +154,14 @@ public class FriendService {
             List<String> img = imgRepository.imgpathListByGubunAndId(gubun, u.getUserid());
             if (!img.isEmpty()) {
                userMap.put("image", img.get(0));
-            }else {
+            } else {
                userMap.put("image", null);
             }
             // userid 매핑
             useridMap.put(userMap.get("id"), userMap);
             popularMap.put("users", useridMap);
+            index.add(u.getUserid());
+            popularMap.put("index", index);
          }
       } else {
          popularMap.put("users", null);
@@ -166,7 +169,7 @@ public class FriendService {
 
       return popularMap;
    }
-   
+
 // 3-1 필터없는 기본검색
    public Map<String, Object> DefaultSearchFriends(Integer userid, Integer page) {
       System.out.println("추천친구");
@@ -174,6 +177,7 @@ public class FriendService {
       User user = userRepository.findByUserid(userid);
       // userid에 해당하는 userinterest값
       List<Integer> userCodeList = userInterestRepository.codeByUserid(user.getUserid());
+      System.out.println(userCodeList.get(0));
 
       List<User> userList = new ArrayList<>();
       userList.addAll(userRepository.recommend_1(user.getUserid(), user.getCity(), user.getGu(), userCodeList));
@@ -181,13 +185,13 @@ public class FriendService {
       userList.addAll(userRepository.recommend_3(user.getUserid(), user.getCity(), user.getGu(), userCodeList));
       userList.addAll(userRepository.recommend_4(user.getUserid(), user.getCity(), user.getGu(), userCodeList));
       userList.addAll(userRepository.recommend_5(user.getUserid(), userCodeList));
-      
-      for(int i=0; i<userList.size(); i++) {
-         if(userList.get(i).getUserid() == userid) {
+
+      for (int i = 0; i < userList.size(); i++) {
+         if (userList.get(i).getUserid() == userid) {
             userList.remove(i);
          }
       }
-      
+
       // page당 20명씩 반환
       List<User> userListPage = new ArrayList<>();
       if (page * 20 >= userList.size() && userList.size() > page * 20 - 20) {
@@ -201,15 +205,16 @@ public class FriendService {
       } else {
          return null;
       }
-      
+
       // 더 불러올 페이지가 있는지의 여부
-      Boolean hasMorePages = ((userList.size() - page*20) > 0) ? true : false;
-      
+      Boolean hasMorePages = ((userList.size() - page * 20) > 0) ? true : false;
+
       final int gubun = 1;
       System.out.println(userListPage);
       Map<String, Object> popularMap = new HashMap<>();
       Map<Object, Object> useridMap = new HashMap<>();
       List<Integer> useridList = new ArrayList<>();
+      List<Integer> index = new ArrayList<>();
       // user정보 매핑
       for (User u : userListPage) {
          Map<String, Object> userMap = new HashMap<>();
@@ -217,9 +222,9 @@ public class FriendService {
          userMap.put("nickName", u.getName());
          userMap.put("gender", u.getGender());
          // age 계산
-         if(u.getBirth()!=null) {
+         if (u.getBirth() != null) {
             userMap.put("age", new Date().getYear() - u.getBirth().getYear() + 1);
-         }else {
+         } else {
             userMap.put("age", null);
          }
          userMap.put("si", u.getCity());
@@ -231,16 +236,19 @@ public class FriendService {
          List<String> img = imgRepository.imgpathListByGubunAndId(gubun, u.getUserid());
          if (!img.isEmpty()) {
             userMap.put("image", img.get(0));
-         }else {
+         } else {
             userMap.put("image", null);
          }
          // userid 매핑
          useridMap.put(userMap.get("id"), userMap);
          popularMap.put("users", useridMap);
+         index.add(u.getUserid());
       }
       popularMap.put("hasMorePages", hasMorePages);
-      
+
+      popularMap.put("index", index);
+
       return popularMap;
-   }  
-   
+   }
+
 }

@@ -20,5 +20,6 @@ public interface ClubnoticeRepository extends JpaRepository<Clubnotice, Integer>
    @Query(value="select * from clubnotice where noticeid=:noticeid",nativeQuery=true)
    public Clubnotice getClubnotice(@Param("noticeid")int noticeid);
 
-    
+   @Query(value="select * from clubnotice where clubid=:clubid",nativeQuery=true)
+   public List<Clubnotice> getClubnotices(@Param("clubid") int clubid);
 }

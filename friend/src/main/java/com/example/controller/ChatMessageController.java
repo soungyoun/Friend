@@ -19,7 +19,7 @@ import com.example.service.ChatService;
 
 @Controller
 //@CrossOrigin(origins = "http://192.168.0.201:3000", maxAge = 3600)
-@CrossOrigin(origins ="http://192.168.0.200:3000", maxAge = 3600)
+@CrossOrigin(origins ="http://localhost:3000", maxAge = 3600)
 public class ChatMessageController {
 
     @Autowired

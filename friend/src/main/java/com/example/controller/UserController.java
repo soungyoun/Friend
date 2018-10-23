@@ -19,7 +19,7 @@ import com.example.service.UserService;
 
 @RestController
 //@CrossOrigin(origins ="http://192.168.0.201:3000", maxAge = 3600)
-@CrossOrigin(origins ="http://192.168.0.200:3000", maxAge = 3600)
+@CrossOrigin(origins ="http://localhost:3000", maxAge = 3600)
 public class UserController {
    
    @Autowired

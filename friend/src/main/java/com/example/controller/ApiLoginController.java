@@ -16,7 +16,7 @@ import com.example.api.SnsServiceFactory;
 import com.example.service.LoginService;
 
 @Controller
-//@CrossOrigin(origins = "http://192.168.0.201:3000", maxAge = 3600)
+@CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
 public class ApiLoginController {
 
    @Autowired
@@ -42,7 +42,7 @@ public class ApiLoginController {
       
       //userid 응답
       redirectAttributes.addFlashAttribute("userid", loginService.getQuickSave(session, code, state, name));
-      return "redirect:http://192.168.0.201:3000";
+      return "redirect:http://localhost:3000";
    }
    
    //메일 인증

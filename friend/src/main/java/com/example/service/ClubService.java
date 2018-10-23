@@ -16,7 +16,11 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
+import javax.transaction.Transactional;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,12 +32,16 @@ import com.example.model.Club;
 import com.example.model.Clubinterest;
 import com.example.model.Clubnotice;
 import com.example.model.Clubuser;
+import com.example.model.Feel;
+import com.example.model.Hit;
 import com.example.model.Img;
 import com.example.model.Noticecom;
 import com.example.model.User;
 import com.example.repository.ClubRepository;
 import com.example.repository.ClubUserRepository;
 import com.example.repository.ClubnoticeRepository;
+import com.example.repository.FeelRepository;
+import com.example.repository.HitRepository;
 import com.example.repository.ImgRepository;
 import com.example.repository.NoticecomRepository;
 import com.example.repository.AlarmRepository;
@@ -65,7 +73,11 @@ public class ClubService {
    private ClubnoticeRepository clubnoticeRepository;
    @Autowired
    private NoticecomRepository noticecomRepository;
-
+   @Autowired
+   private HitRepository hitRepository;
+   @Autowired
+   private FeelRepository feelRepository;
+   
    @Autowired
    private UserFunction userFunction;
 
@@ -238,104 +250,161 @@ public class ClubService {
    }
 
    // 보내줄 그룹정보 4-1
-   public Map<String, Object> groupInfo(int userid, int seq) {
-      List<Integer> userList = new ArrayList<>();
-      userList = clubUserRepository.getMemberId(seq);
-      List<String> userBitrhList = new ArrayList<>();
-      List<String> userYear = new ArrayList<>();
-      List<Integer> userYearInt = new ArrayList<>();
-      int resultYear = 0;
-      int yearAvg = 0;
-      Date nowDate = new Date();
-      // nowDate.getYear() : 현재년도-1900 (1900년 기준)
-      for (int i = 0; i < userList.size(); i++) {
-         userBitrhList.add(userRepository.getUserBirth(userList.get(i)));
-         userYear.add(userBitrhList.get(i).split("-")[0]);
-         userYearInt.add(Integer.parseInt(userYear.get(i)) - 1900);
-         resultYear = resultYear + nowDate.getYear() - userYearInt.get(i) + 1;
-      }
+   public Map<String, Object> groupInfo(int userid, int seq,int page) {
+	      List<Integer> userList = new ArrayList<>();
+	      userList = clubUserRepository.getMemberId(seq);
+	      List<String> userBitrhList = new ArrayList<>();
+	      List<String> userYear = new ArrayList<>();
+	      List<Integer> userYearInt = new ArrayList<>();
+	      int resultYear = 0;
+	      int yearAvg = 0;
+	      Date nowDate = new Date();
+	      // nowDate.getYear() : 현재년도-1900 (1900년 기준)
+	      for (int i = 0; i < userList.size(); i++) {
+	         userBitrhList.add(userRepository.getUserBirth(userList.get(i)));
+	         userYear.add(userBitrhList.get(i).split("-")[0]);
+	         userYearInt.add(Integer.parseInt(userYear.get(i)) - 1900);
+	         resultYear = resultYear + nowDate.getYear() - userYearInt.get(i) + 1;
+	      }
 
-      yearAvg = resultYear / userYear.size();
+	      yearAvg = resultYear / userYear.size();
+	      
+	      Club c = clubRepository.groupInfo(seq);
+	      Map<String, Object> groupInfoMap = new HashMap<>();
+	      Map<String, Object> master = new HashMap<>();
+	      List<Integer> interestList = clubinterestRepository.interestList(seq);
+	   //   List<Integer> interest = new ArrayList<>();
+	      /*
+	       * for(int i=0;i<interestList.size();i++) {
+	       * interest.add(interestList.get(i).getCode()); }
+	       */
+	      int masterid = clubUserRepository.getMaster(seq);
 
-      Club c = clubRepository.groupInfo(seq);
-      Map<String, Object> groupInfoMap = new HashMap<>();
-      Map<String, Object> master = new HashMap<>();
-      List<Integer> interestList = clubinterestRepository.interestList(seq);
-   //   List<Integer> interest = new ArrayList<>();
-      /*
-       * for(int i=0;i<interestList.size();i++) {
-       * interest.add(interestList.get(i).getCode()); }
-       */
-      int masterid = clubUserRepository.getMaster(seq);
+	      master.put("userid", masterid);
+	      master.put("name", userRepository.getUserName(masterid));
 
-      master.put("userid", masterid);
-      master.put("name", userRepository.getUserName(masterid));
+	      imgRepository.getImgyn(2, c.getClubid());
+	      List<Map<String, Object>> imgList = new ArrayList<>();
+	      List<String> imgPathList = new ArrayList<>();
+	      int ismygroup=0;
+	         if(clubUserRepository.isMyClub(c.getClubid(), userid)==null) {
+	            ismygroup=0;
+	         }
+	         else {
+	            ismygroup=clubUserRepository.isMyClub(c.getClubid(), userid);
+	         }
+	         imgPathList = imgRepository.getImgpath(2, c.getClubid());
+	      
+	      for (int i = 0; i < imgPathList.size(); i++) {
+	         Map<String, Object> imgMap = new HashMap<>();
+	         imgMap.put("image",imgPathList.get(i));
+	         imgMap.put("imgyn", imgRepository.getImgyn(2, c.getClubid()).get(i));
+	         imgList.add(imgMap);
+	      }
 
-      imgRepository.getImgyn(2, c.getClubid());
-      List<Map<String, Object>> imgList = new ArrayList<>();
-      List<String> imgPathList = new ArrayList<>();
-      int ismygroup=0;
-         if(clubUserRepository.isMyClub(c.getClubid(), userid)==null) {
-            ismygroup=0;
-         }
-         else {
-            ismygroup=clubUserRepository.isMyClub(c.getClubid(), userid);
-         }
-         imgPathList = imgRepository.getImgpath(2, c.getClubid());
-      
-      for (int i = 0; i < imgPathList.size(); i++) {
-         Map<String, Object> imgMap = new HashMap<>();
-         imgMap.put("image",imgPathList.get(i));
-         imgMap.put("imgyn", imgRepository.getImgyn(2, c.getClubid()).get(i));
-         imgList.add(imgMap);
-      }
-      List<Clubuser> cuList=clubUserRepository.recentmember(c.getClubid());
-      List<Map<String,Object>> recentmemberList=new ArrayList<>();
-      Map<String,Object> m=new HashMap<>();
-      for(int i=0;i<cuList.size();i++) {
-         m.put("id", cuList.get(i).getUserid());
-         m.put("name", userRepository.getUserName(cuList.get(i).getUserid()));
-         recentmemberList.add(m);
-      }
-      List<Clubnotice> anList=clubnoticeRepository.recentAnnouncements(c.getClubid());
-      List<Map<String,Object>> announcements=new ArrayList<>();
-      for(int i=0;i<anList.size();i++) {
-         Map<String,Object> ma=new HashMap<>();
-         ma.put("n_title", anList.get(i).getTitle());
-         ma.put("n_content", anList.get(i).getContent());
-         ma.put("n_writedate", anList.get(i).getWritedate());
-         
-         announcements.add(ma);
-      }
-      List<Integer> useridList=clubUserRepository.getMemberId(c.getClubid());
-      List<Map<String,Object>> userlist=new ArrayList<>();
-      for(int i=0;i<useridList.size();i++) {
-         Map<String,Object> ma=new HashMap<>();
-         ma.put("username", userRepository.getUser(useridList.get(i)).getName());
-         ma.put("usergender", userRepository.getUser(useridList.get(i)).getGender());
-         ma.put("useremail", userRepository.getUser(useridList.get(i)).getEmail());
-         userlist.add(ma);
-      }
-      
-      int membercnt = clubUserRepository.getMemberCount(seq);
-      groupInfoMap.put("seq", c.getClubid());
-      groupInfoMap.put("master", master);
-      groupInfoMap.put("interests", interestList);
-      groupInfoMap.put("estDate", c.getStartdate());
-      groupInfoMap.put("memberCnt", membercnt);
-      groupInfoMap.put("maxMember", c.getMaxcount());
-      groupInfoMap.put("si", c.getCity());
-      groupInfoMap.put("gu", c.getGu());
-      groupInfoMap.put("avgAge", yearAvg);
-      groupInfoMap.put("groupintro", c.getContent());
-      groupInfoMap.put("images", imgList);
-      groupInfoMap.put("isMyGroup", ismygroup);
-      groupInfoMap.put("newMembers", recentmemberList);
-      groupInfoMap.put("announcements", announcements);
-      groupInfoMap.put("members", userlist);
-      
-      return groupInfoMap;
-   }
+	 
+	      List<Integer> useridList=clubUserRepository.getMemberId(c.getClubid());
+	      List<Map<String,Object>> userlist=new ArrayList<>();
+	      for(int i=0;i<useridList.size();i++) {
+	         Map<String,Object> ma=new HashMap<>();
+	         ma.put("username", userRepository.getUser(useridList.get(i)).getName());
+	         ma.put("usergender", userRepository.getUser(useridList.get(i)).getGender());
+	         ma.put("useremail", userRepository.getUser(useridList.get(i)).getEmail());
+	         userlist.add(ma);
+	      }
+	      
+	      int membercnt = clubUserRepository.getMemberCount(seq);
+	      groupInfoMap.put("id", c.getClubid());
+	 		groupInfoMap.put("groupName", c.getName());
+	      groupInfoMap.put("master", master);
+	      groupInfoMap.put("interests", interestList);
+	      groupInfoMap.put("estDate", c.getStartdate());
+	      groupInfoMap.put("memberCnt", membercnt);
+	      groupInfoMap.put("maxMember", c.getMaxcount());
+
+	      groupInfoMap.put("minAge",c.getAgestart());
+	      groupInfoMap.put("maxAge",c.getAgeend());
+	      groupInfoMap.put("avgAge", yearAvg);
+	      groupInfoMap.put("gender", c.getGender());
+	      groupInfoMap.put("si", c.getCity());
+	      groupInfoMap.put("gu", c.getGu());
+	      groupInfoMap.put("intro", c.getContent());
+	      groupInfoMap.put("images", imgList);
+	 
+	      Map<String,Object> resultMap=new HashMap<>();
+	      resultMap.put("group", groupInfoMap);
+	      
+	      
+	      if(ismygroup==2) {
+	    	  Map<String,Object> postMap=new HashMap<>();
+	    	  int usersu=0;
+	    	  List<Clubnotice> noticelist=clubnoticeRepository.getClubnotices(c.getClubid());
+	    	  for(int i=0;i<noticelist.size();i++) {
+	    		  Map<String,Object> map=new HashMap<>();
+	    		  Map<String,Object> userMap=new HashMap<>();
+	    		  userMap.put("id", noticelist.get(i).getUserid());
+	    		  userMap.put("nickName",  userRepository.getUserName(noticelist.get(i).getUserid()));
+	    		  userMap.put("image", imgRepository.getImg(1, noticelist.get(i).getUserid())); //유저이미지
+	    		  
+	    		  map.put("type", noticelist.get(i).getType());
+	    		  map.put("id", noticelist.get(i).getNoticeid());
+	    		  map.put("title", noticelist.get(i).getTitle());
+	    		  map.put("content", noticelist.get(i).getContent());
+	    		  map.put("writedate", noticelist.get(i).getWritedate());
+	    		  map.put("user", userMap);
+	    		  map.put("views", hitRepository.readcounts(3, noticelist.get(i).getNoticeid()));
+	    		  map.put("likes", feelRepository.likes(3, noticelist.get(i).getNoticeid()));
+	    		  Map<String,Object> comments=new HashMap<>();
+	    		  comments.put("id", 0);
+	    		 List<Noticecom> notice= noticecomRepository.noticecom(noticelist.get(i).getNoticeid());
+	    		 List<Map<String,Object>> reMap=new ArrayList<>();
+	    		 for(int k=0;k<notice.size();k++) {
+	    			 Map<String,Object> coMap=new HashMap<>();
+	    			 Map<String,Object> uMap=new HashMap<>();
+	    			 uMap.put("id", notice.get(k).getUserid());
+	    			 uMap.put("nickName", userRepository.getUserName(notice.get(k).getUserid()));
+	    			 uMap.put("image", imgRepository.getImg(1, notice.get(k).getUserid()));
+	    			 coMap.put("id", notice.get(k).getComid());
+	    			 coMap.put("user", uMap);
+	    			 coMap.put("content",notice.get(k).getContent());
+	    			 coMap.put("writedate", notice.get(k).getWritedate());
+	    			 reMap.add(coMap);
+	    		 }
+	    		 map.put("comments", userFunction.ListToMap(reMap, "id"));
+	    		 
+	    		 Boolean hasMorePages=true;
+	    		 if(noticelist.size()/10+1==page)
+	    			 hasMorePages=false;
+	    		 resultMap.put("hasMorePages", hasMorePages);
+	    		 resultMap.put("members", "그룹 멤버 정보");
+	    	  Map<String,Object> memberMap=new HashMap<>();
+	    	  
+	    	  
+	    	  List<Clubuser> culist=clubUserRepository.getclubuser(c.getClubid());
+	    	  usersu=culist.size();
+	    	  List<Map<String,Object>> cuList=new ArrayList<>();
+	    		for(int a=0;a<culist.size();a++) {
+	    			Map<String,Object> cuMap=new HashMap<>();
+	    			cuMap.put("id", culist.get(a).getUserid());
+	    			cuMap.put("nickName", userRepository.getUserName(culist.get(a).getUserid()));
+	    			cuMap.put("gender", userRepository.getUser(culist.get(a).getUserid()).getGender());
+	    			cuMap.put("image", imgRepository.getImg(1, culist.get(a).getUserid()));
+	    			cuMap.put("online", false);
+	    			cuList.add(cuMap);
+	    		}
+	    	  
+	    		resultMap.put("members", userFunction.ListToMap(cuList, "id"));
+	    		resultMap.put("posts", map);
+	    		resultMap.put("memberPages", culist.size()/10+1);
+	    	  }
+	    
+	      }
+	      
+	      resultMap.put("isMyGroup", ismygroup);
+	      
+	      
+	      return resultMap;
+	   }
 
 // 5-1 Groups Page이동 및 그룹 더읽어오기 ClubService
    public Map<String, Object> searchGroups(int page, boolean filter, String keyword, int searchOption, int si, int gu,
@@ -352,34 +421,49 @@ public class ClubService {
          Map<String, Object> returnMap = new HashMap<>();
          Map<String, Object> mMap = new HashMap<>();
 
-            for (int i = 0; i < clubList.size(); i++) {
-               Map<String, Object> masterMap = new HashMap<>();
-               mMap.put("clubid", clubList.get(i).getClubid());
+      
+         for(int i=0;i<clubList.size();i++) {
+        	 
+        
+            	  Map<String, Object> map = new HashMap<>();
+                  map.put("id", clubList.get(i).getClubid());
+                  map.put("groupName", clubList.get(i).getName());
+                  map.put("memberCnt", userList.get(i).size());
+                  map.put("maxMember", clubList.get(i).getMaxcount());
+                  map.put("image",imgRepository.getImg(2, clubList.get(i).getClubid()));
+                  map.put("intro", clubList.get(i).getContent());
+                  map.put("interests", interestList.get(i));
+                 
+                  
+                  map.put("si",  clubRepository.groupInfo(clubList.get(i).getClubid()).getCity());
+                  map.put("gu",  clubRepository.groupInfo(clubList.get(i).getClubid()).getGu());
+                  groups.add(map);
+                  //si gu 
+         }
+            //   }
+               boolean cuPage=true;
+               if(clubList.size()!=10) {
+               	cuPage=false;
+               }
+               returnMap = userFunction.ListToMap(groups, "id");
+               Map<String,Object> remap=new HashMap<>();
+               remap.put("groups", returnMap);
+               remap.put("hasMorePages", cuPage);
+               return remap;
+      
 
-               masterMap.put("userid", clubUserRepository.getMaster(clubList.get(i).getClubid()));
-               masterMap.put("name",
-                     userRepository.getUserName(clubUserRepository.getMaster(clubList.get(i).getClubid())));
-               Map<String, Object> map = new HashMap<>();
-               map.put("seq", clubList.get(i).getClubid());
-               map.put("groupName", clubList.get(i).getName());
-               map.put("master", masterMap);
-               map.put("estDate", clubList.get(i).getStartdate());
-               map.put("memberCnt", userList.get(i).size());
-               map.put("maxMember", clubList.get(i).getMaxcount());
-               map.put("image",imgRepository.getImg(2, clubList.get(i).getClubid()));
-               map.put("groupintro", clubList.get(i).getContent());
-               map.put("interests", interestList.get(i));
-               groups.add(map);
-               
-            }
-            returnMap = userFunction.ListToMap(groups, "seq");
-            return returnMap;
-            
       } else {
          return recoGroup(userid, page);
       }
    }
-
+   public Map<String,Object> searchResult(int page, boolean filter, String keyword, int searchOption, int si, int gu,
+	         int gender, int minAge, int maxAge, int interest, int userid){
+	   Map<String,Object> map=new HashMap<>();
+	   boolean has;
+	  
+	   return null;
+   }
+  
 // 1-1-3 ClubService 인기그룹
    public Map<String, Object> topClub() {
       List<Club> topClubList = clubRepository.topGroup();
@@ -453,69 +537,92 @@ public class ClubService {
       if (page * 10 >= result.size() && result.size() > page * 10 - 10) {
          for (int i = page * 10 - 10; i < result.size(); i++) {
    //         List<Integer> seqList = new ArrayList<>();
+        
 
             Map<String, Object> innerMap = new HashMap<>();
             Map<String, Object> masterMap = new HashMap<>();
-            masterMap.put("userid", clubUserRepository.getMaster(result.get(i).getClubid()));
-            masterMap.put("name",
-                  userRepository.getUserName(clubUserRepository.getMaster(result.get(i).getClubid())));
+      //      masterMap.put("userid", clubUserRepository.getMaster(result.get(i).getClubid()));
+      //      masterMap.put("name",
+        //          userRepository.getUserName(clubUserRepository.getMaster(result.get(i).getClubid())));
             List<Integer> interestList = clubinterestRepository.interestList(result.get(i).getClubid());
-
             // seqList.add(result.get(i).getClubid());
-            innerMap.put("seq", result.get(i).getClubid());
+            innerMap.put("id", result.get(i).getClubid());
             innerMap.put("groupName", result.get(i).getName());
-            innerMap.put("master", masterMap);
+          //  innerMap.put("master", masterMap);
             innerMap.put("interests", interestList);
-
-
-            innerMap.put("estDate", result.get(i).getStartdate());
-            List<String> imglist=imgRepository.getImgpath(2, result.get(i).getClubid());
+       //     innerMap.put("estDate", result.get(i).getStartdate());
+            String imglist=imgRepository.getImg(2, result.get(i).getClubid());
             innerMap.put("image",imglist);
-            
-            innerMap.put("groupIntro", result.get(i).getContent());
+            innerMap.put("si",  clubRepository.groupInfo(result.get(i).getClubid()).getCity());
+            innerMap.put("gu",  clubRepository.groupInfo(result.get(i).getClubid()).getGu());
+            innerMap.put("Intro", result.get(i).getContent());
+            innerMap.put("maxMember", clubRepository.groupInfo(result.get(i).getClubid()).getMaxcount());
+            innerMap.put("memberCnt", clubUserRepository.getMemberCount(result.get(i).getClubid()));
             resultList.add(innerMap);
+            //maxMember memerCnt
          }
 
          /*
           * recoGroups2=userFunction.ListToMap(seqMap, "key"); resultList.add(recoGroups2);
           */
-         recoGroups = userFunction.ListToMap(resultList, "seq");
-
-         return recoGroups;
+         recoGroups = userFunction.ListToMap(resultList, "id");
+         boolean cuPage=true;
+         if(page==result.size()/10+1) {
+         	cuPage=false;
+         }
+         Map<String,Object> remap=new HashMap<>();
+         remap.put("groups", recoGroups);
+         remap.put("hasMorePages", cuPage);
+         return remap;
       } else if (page * 10 < result.size()) {
          for (int i = page * 10 - 10; i < page * 10; i++) {
             Map<String, Object> innerMap = new HashMap<>();
             Map<String, Object> masterMap = new HashMap<>();
-            masterMap.put("userid", clubUserRepository.getMaster(result.get(i).getClubid()));
-            masterMap.put("name",
-                  userRepository.getUserName(clubUserRepository.getMaster(result.get(i).getClubid())));
+       //     masterMap.put("userid", clubUserRepository.getMaster(result.get(i).getClubid()));
+      //      masterMap.put("name",
+      //            userRepository.getUserName(clubUserRepository.getMaster(result.get(i).getClubid())));
             List<Integer> interestList = clubinterestRepository.interestList(result.get(i).getClubid());
 
-            innerMap.put("seq", result.get(i).getClubid());
+            innerMap.put("id", result.get(i).getClubid());
             innerMap.put("groupName", result.get(i).getName());
-            innerMap.put("master", masterMap);
+     //       innerMap.put("master", masterMap);
             innerMap.put("interests", interestList);
-            innerMap.put("estDate", result.get(i).getStartdate());
-            innerMap.put("image",imgRepository.getImgpath(2, result.get(i).getClubid()));
+        //    innerMap.put("estDate", result.get(i).getStartdate());
+      //      innerMap.put("image",imgRepository.getImgpath(2, result.get(i).getClubid()));
+            String imglist=imgRepository.getImg(2, result.get(i).getClubid());
+            innerMap.put("image", imglist);
+            innerMap.put("si",  clubRepository.groupInfo(result.get(i).getClubid()).getCity());
+            innerMap.put("gu",  clubRepository.groupInfo(result.get(i).getClubid()).getGu());
+            innerMap.put("Intro", result.get(i).getContent());
+            innerMap.put("maxMember", clubRepository.groupInfo(result.get(i).getClubid()).getMaxcount());
+            innerMap.put("memberCnt", clubUserRepository.getMemberCount(result.get(i).getClubid()));
             
-            innerMap.put("groupIntro", result.get(i).getContent());
             resultList.add(innerMap);
          }
-         recoGroups = userFunction.ListToMap(resultList, "seq");
-         return recoGroups;
-      } else {
-         return null;
+         recoGroups = userFunction.ListToMap(resultList, "id");
+         boolean cuPage=true;
+         if(page==result.size()/10+1) {
+         	cuPage=false;
+         }
+         Map<String,Object> remap=new HashMap<>();
+         remap.put("groups", recoGroups);
+         remap.put("hasMorePages", cuPage);
+         return remap;
+      } 
+      
+      else {
+    	  Map<String,Object> map=new HashMap<>();
+    	  map.put("dddd", 000);
+    	  return map;
       }
-
    }
 
-   // 이 아래부터 9월5일 보내줄값
+   
 
    // 그룹생성 4-2
-   public int createGroup(int userid, String groupName, String groupIntro, int[] interests, int city, int gu,
-         int minAge, int maxAge, int gender, int maxMember, MultipartFile[] files, Boolean[] mainImgYN) {
-
-      if (true) {
+   public Map<String,Object> createGroup(int userid, String groupName, String groupIntro, JSONArray interests, int city, int gu,
+         int minAge, int maxAge, int gender, int maxMember,JSONArray images) throws JSONException {
+	   	
          // 그룹개설
 
          Club c = new Club();
@@ -547,30 +654,93 @@ public class ClubService {
          cu.setAuth(1);
          clubUserRepository.save(cu);
 
+         List<Integer> interlist=new ArrayList<>();
          // 그룹관심사 추가
-         for (int i = 0; i < interests.length; i++) {
+         for (int i = 0; i < interests.length(); i++) {
             Clubinterest ci = new Clubinterest();
             ci.setClubid(newClub.getClubid());
-            ci.setCode(interests[i]);
+//            try {
+				ci.setCode(interests.getInt(i));
+				interlist.add(interests.getInt(i));
             ci.setWritedate(new Date());
             clubinterestRepository.save(ci);
          }
-         // 사진추가
          
-            try {
-               saveFile(files, mainImgYN, clubid);
-            } catch (IOException e) {
-               // TODO Auto-generated catch block
-               e.printStackTrace();
-            }
-         return 1;
-      }
+         // 사진추가
+     		userFunction.imgUpdate(2, clubid, images);
+         
+       //    userFunction.imgUpdate(2, clubid, images);
+        
+           
+           Map<String,Object> clubMap=new HashMap<>();
+           
+           Map<String,Object> masterMap=new HashMap<>();
+           masterMap.put("id", userid);
+           masterMap.put("nickName", userRepository.getUserName(userid));
+           clubMap.put("id",newClub.getClubid());
+           clubMap.put("groupName",newClub.getName());
+           clubMap.put("master",masterMap);
+           clubMap.put("interests",interlist);
+           clubMap.put("estDate",newClub.getStartdate());
+           clubMap.put("memberCnt",clubUserRepository.getMemberCount(newClub.getClubid()));
+           clubMap.put("maxMember",newClub.getMaxcount());
+           clubMap.put("minAge",newClub.getAgestart());
+           clubMap.put("maxAge",newClub.getAgeend());
+           clubMap.put("gender",newClub.getGender());
+           clubMap.put("si",newClub.getCity());
+           clubMap.put("gu",newClub.getGu());
+           clubMap.put("intro",newClub.getContent());
+           clubMap.put("images",imgRepository.getImgpath(2, newClub.getClubid()));
+           Map<String,Object> reMap=new HashMap<>();
+           reMap.put("group", clubMap);
+          
+           
+           return reMap;
+      
 
-      else {
-         return 0;
-      }
+   
 
    }
+   //그룹생성, 수정
+   @Transactional
+   public Map<String,Object> createUpdate(String json) throws JSONException{
+	   JSONObject obj=new JSONObject(json);
+
+	     JSONArray images=(JSONArray)obj.get("images");
+	     String groupName=(String)obj.get("groupName");
+    
+	      int minAge=obj.getInt("minAge");
+	      int maxAge=obj.getInt("maxAge");
+	      int token= obj.getInt("token");
+	      int si=obj.getInt("si");
+	      int gu=obj.getInt("gu");
+	      int maxMember=obj.getInt("maxMember");
+    
+	      int gender=obj.getInt("gender");
+    String intro=(String)obj.get("intro");
+    
+
+
+   JSONArray interests=(JSONArray)obj.get("interests");
+
+    
+   Map<String,Object> map=new HashMap<>();
+    if(!obj.has("id")) {
+  	  
+    map=createGroup(token, groupName, intro, interests,
+  			  si, gu, minAge, maxAge,
+  			  gender, maxMember, images);
+    }
+    else {
+  	  int id=obj.getInt("id");
+  	  map=updateGroup(token, groupName, intro, interests,
+  			  si, gu, minAge, maxAge,
+  			  gender, maxMember, images,id);
+    }
+   return map;
+   }
+   
+   
 
    // 그룹생성시 사진저장하는 메소드
    public void saveFile(MultipartFile[] files, Boolean[] mainImgYN, Integer userid) throws IOException {
@@ -603,58 +773,112 @@ public class ClubService {
    // 새로운 리스트 하나만들어서 리턴하는맵 string값에 넣음. value를 리스트 순서.
 
    // 그룹 수정 4-2-2
-   public int updateGroup(int userid, String groupName, String groupIntro, int[] interests, int city, int gu,
-         int minAge, int maxAge, int gender, int maxMember, MultipartFile[] files, Boolean[] mainImgYN, boolean yn,
-         int clubid) {
+   public Map<String,Object> updateGroup(int userid, String groupName, String groupIntro, JSONArray interests, int city, int gu,
+	         int minAge, int maxAge, int gender, int maxMember,JSONArray images,Integer clubid) {
       // 마스터가 자신일시
       if (clubUserRepository.getMaster(clubid) == userid) {
 
-         // 이미지를 지우고
-         imgRepository.deleteByIdAndGubun(clubid, 2);
-         
-         
-         // 이미지 생성
-         try {
-            saveFile(files, mainImgYN, clubid);
-         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-         }
+       userFunction.imgUpdate(2, clubid, images);
+       
+       
          clubinterestRepository.deleteByClubid(clubid);
-         for (int i = 0; i < interests.length; i++) {
+         for (int i = 0; i < interests.length(); i++) {
             Clubinterest ci = new Clubinterest();
             ci.setClubid(clubid);
-            ci.setCode(interests[i]);
+            try {
+				ci.setCode(interests.getInt(i));
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
             ci.setWritedate(new Date());
             clubinterestRepository.save(ci);
          }
 
-         clubRepository.updateClub(groupName, gender, city, gu, groupIntro, minAge, maxAge, maxMember, yn, clubid);
+         clubRepository.updateClub(groupName, gender, city, gu, groupIntro, minAge, maxAge, maxMember, true, clubid);
+         
+         
+         Map<String,Object> clubMap=new HashMap<>();
+         Club c=clubRepository.groupInfo(clubid);
+         Map<String,Object> masterMap=new HashMap<>();
+         masterMap.put("id", userid);
+         masterMap.put("nickName", userRepository.getUserName(userid));
+         clubMap.put("id",clubid);
+         clubMap.put("groupName",groupName);
+         clubMap.put("master",masterMap);
+         clubMap.put("interests",interests);
+         clubMap.put("estDate",c.getStartdate());
+         clubMap.put("memberCnt",clubUserRepository.getMemberCount(c.getClubid()));
+         clubMap.put("maxMember",c.getMaxcount());
+         clubMap.put("minAge",c.getAgestart());
+         clubMap.put("maxAge",c.getAgeend());
+         clubMap.put("gender",c.getGender());
+         clubMap.put("si",c.getCity());
+         clubMap.put("gu",c.getGu());
+         clubMap.put("intro",c.getContent());
+         clubMap.put("images",imgRepository.getImgpath(2, c.getClubid()));
+         Map<String,Object> reMap=new HashMap<>();
+         reMap.put("group", clubMap);
+        
+         
+         return reMap;
+    
 
-         return 1;
-      } else {
-         return 0;
-
-      }
+      } 
+      return null;
 
    }
 
    // 4-4-1 그룹 가입 신청 폼으로 이동
    // Request : ?clubid=integer&token=String
    // Response : "그룹 가입조건, 내 정보 ,그룹 메세지"
-   public Map<String, Object> groupJoin(int clubid, int userid) {
+   public int groupJoin(int clubid, int userid,String message) {
       // 비교할 정보 - 필수 : 나이제한,성별제한,
-      //
+      
+	  
       Club c = clubRepository.groupInfo(clubid);
-      Map<String, Object> map = new HashMap<>();
+      User u=userRepository.getUser(userid);
+      int minAge=c.getAgestart();
+      int maxAge=c.getAgeend();
+      int myAge=userFunction.UserAge(u.getBirth());
+      int groupGender=c.getGender();
+      int myGender=u.getGender();
+      
+      if(groupGender==3) {
+    	  if(minAge<=myAge&&myAge<=maxAge) {
+    		  return 1;
+    	  }
+    	  else {
+    		  return 2;
+    	  }
+      }
+      else {
+    	  if(myGender==groupGender) {
+    		  if(minAge<=myAge&&myAge<=maxAge) {
+        		  return 1;
+        	  }
+        	  else {
+        		  return 2;
+        	  }
+    	  }
+    	  else {
+    		  return 3;
+    	  }
+      }
+      
+      // 1 : 성공 , 2 : 나이제한 , 3 : 성별제한
+      
+      
+     /* Map<String, Object> map = new HashMap<>();
       map.put("age", c.getAgestart() + "~" + c.getAgeend());
       map.put("gender", c.getGender());
       map.put("intro", c.getContent());
       map.put("membercnt", clubUserRepository.getMemberCount(clubid));
       map.put("maxmember", clubRepository.groupInfo(clubid).getMaxcount());
       // 현재인원 , 최대인원
+      */
+      
 
-      return map;
    }
 
    // 4-4-2 그룹 가입 신청
@@ -690,8 +914,10 @@ public class ClubService {
                al.setReceiveyn(false);
                al.setUserid(clubUserRepository.getMaster(clubid));
                al.setWritedate(new Date());
+               al.setClubid(clubid);
                al.setMessage(userRepository.getUserName(userid) + "님이 그룹가입을 신청했어요!");
                alarmRepository.save(al);
+               userFunction.sendAlarmSocketBoolean(clubUserRepository.getMaster(clubid), true);
                return 1;
             } else {
                // 나이제한 걸림.! 가입불가
@@ -717,9 +943,11 @@ public class ClubService {
                   al.setId(clubid);
                   al.setReceiveyn(false);
                   al.setUserid(clubUserRepository.getMaster(clubid));
+                  al.setClubid(clubid);
                   al.setWritedate(new Date());
                   al.setMessage(userRepository.getUserName(userid) + "님이 그룹가입을 신청했어요!");
                   alarmRepository.save(al);
+                  userFunction.sendAlarmSocketBoolean(clubUserRepository.getMaster(clubid), true);
                   return 1;
                } else {
                   // 나이제한걸림! 가입불가
@@ -761,17 +989,22 @@ public class ClubService {
       return userFunction.ListToMap(map, "index");
    }
 
-   // 4-4-4 그룹 가입 신청 허락/거절
-   public int allowGroupJoin2(int clubid, boolean yn, int userid) {
+   // 4-4-4 그룹 가입 신청 허락
+   public void allowGroupJoin2(int masterid, int userid,int groupid,int notification ) {
 
-      if (yn == true) {
-         clubUserRepository.allowGroup(clubid, userid);
-         return 1;
-      } else {
+     /*  else {
          clubUserRepository.deleteByClubidAndUserid(clubid, userid);
          return 0;
-      }
-
+      }*/
+	   alarmRepository.readAlarmUpdate(notification);
+	   clubUserRepository.allowGroup(groupid, userid);
+   }
+   // 그룹가입 거절
+   public void rejectGroup(int masterid, int userid,int groupid,int notification ) {
+	   
+	   alarmRepository.readAlarmUpdate(notification);
+	   clubUserRepository.deleteByClubidAndUserid(groupid, userid);
+	   
    }
 
    // 4-5-1 : 그룹 공지글 작성폼 보이기
@@ -800,39 +1033,124 @@ public class ClubService {
    // request : 공지글 내용
    // response : """{ success : Boolean } 가입성공:OK , 가입실패:BAD_REQUEST"""
    @PostMapping("/group/notice")
-   public int writeGroupNotice(Clubnotice clubnotice) {
-      if (true) {
-         Alarm al=new Alarm();
+   public Map<String,Object> writeGroupNotice(int userid,int clubid,String title,String content) {
+     
          Clubnotice cn = new Clubnotice();
-         cn.setClubid(clubnotice.getClubid());
-         cn.setContent(clubnotice.getContent());
-         cn.setMeetdate(clubnotice.getMeetdate());
-         cn.setMeetlocation(clubnotice.getMeetlocation());
-         cn.setMeettime(clubnotice.getMeettime());
-         cn.setNoticeid(clubnotice.getNoticeid());
+         cn.setClubid(clubid);
+         cn.setContent(content);
+         cn.setMeetdate(null);
+         cn.setMeetlocation(null);
+         cn.setMeettime(null);
          cn.setNoticeid(0);
-         cn.setTitle(clubnotice.getTitle());
-         cn.setType(clubnotice.getType());
-         cn.setUserid(clubnotice.getUserid());
+         cn.setTitle(title);
+         cn.setType(3);
+         cn.setUserid(userid);
          cn.setWritedate(new Date());
          clubnoticeRepository.save(cn);
          
-         List<Integer> users=clubUserRepository.getMemberId(clubnotice.getClubid());
+         List<Integer> users=clubUserRepository.getMemberId(clubid);
          for(int i=0;i<users.size();i++) {
+        	 Alarm al=new Alarm();
+        	 al.setAlarmid(0);
             al.setGubun(6);
-            al.setId(clubnotice.getClubid());
+            al.setId(clubid);
             al.setMessage("그룹의 새 공지글이 작성되었어요");
             al.setReceiveyn(false);
             al.setUserid(users.get(i));
             al.setWritedate(new Date());
             alarmRepository.save(al);
          }
+         Map<String,Object> posts=new HashMap<>();
+         List<Clubnotice> clubnotice=clubnoticeRepository.getClubnotices(clubid);
+         List<Map<String,Object>> list=new ArrayList<>();
+         boolean hasMorePages=false;
+         if(clubnotice.size()>=20) {
+        	 hasMorePages=true;
+        	 for(int i=0;i<20;i++) {
+        		 Map<String,Object> map=new HashMap<>();
+	    		  Map<String,Object> userMap=new HashMap<>();
+	    		  userMap.put("id", clubnotice.get(i).getUserid());
+	    		  userMap.put("nickName",  userRepository.getUserName(clubnotice.get(i).getUserid()));
+	    		  userMap.put("image", imgRepository.getImg(1, clubnotice.get(i).getUserid())); //유저이미지
+	    		  
+	    		  map.put("type", clubnotice.get(i).getType());
+	    		  map.put("id", clubnotice.get(i).getNoticeid());
+	    		  map.put("title", clubnotice.get(i).getTitle());
+	    		  map.put("content", clubnotice.get(i).getContent());
+	    		  map.put("writedate", clubnotice.get(i).getWritedate());
+	    		  map.put("user", userMap);
+	    		  map.put("views", hitRepository.readcounts(3, clubnotice.get(i).getNoticeid()));
+	    		  map.put("likes", feelRepository.likes(3, clubnotice.get(i).getNoticeid()));
+	    		  
+	    		  Map<String,Object> comments=new HashMap<>();
+	    		  comments.put("id", 0);
+	    		 List<Noticecom> notice= noticecomRepository.noticecom(clubnotice.get(i).getNoticeid());
+	    		 List<Map<String,Object>> reMap=new ArrayList<>();
+	    		 for(int k=0;k<notice.size();k++) {
+	    			 Map<String,Object> coMap=new HashMap<>();
+	    			 Map<String,Object> uMap=new HashMap<>();
+	    			 uMap.put("id", notice.get(k).getUserid());
+	    			 uMap.put("nickName", userRepository.getUserName(notice.get(k).getUserid()));
+	    			 uMap.put("image", imgRepository.getImg(1, notice.get(k).getUserid()));
+	    			 coMap.put("id", notice.get(k).getComid());
+	    			 coMap.put("user", uMap);
+	    			 coMap.put("content",notice.get(k).getContent());
+	    			 coMap.put("writedate", notice.get(k).getWritedate());
+	    			 reMap.add(coMap);
+	    		 }
+	    		 map.put("comments", userFunction.ListToMap(reMap, "id"));
+	    		 list.add(map);
+				
+        	 }
+        	 posts.put("posts",userFunction.ListToMap(list, "id"));
+   
+         }
+         else {
+        	 for(int i=0;i<clubnotice.size();i++) {
+        		 Map<String,Object> map=new HashMap<>();
+	    		  Map<String,Object> userMap=new HashMap<>();
+	    		  userMap.put("id", clubnotice.get(i).getUserid());
+	    		  userMap.put("nickName",  userRepository.getUserName(clubnotice.get(i).getUserid()));
+	    		  userMap.put("image", imgRepository.getImg(1, clubnotice.get(i).getUserid())); //유저이미지
+	    		  
+	    		  map.put("type", clubnotice.get(i).getType());
+	    		  map.put("id", clubnotice.get(i).getNoticeid());
+	    		  map.put("title", clubnotice.get(i).getTitle());
+	    		  map.put("content", clubnotice.get(i).getContent());
+	    		  map.put("writedate", clubnotice.get(i).getWritedate());
+	    		  map.put("user", userMap);
+	    		  map.put("views", hitRepository.readcounts(3, clubnotice.get(i).getNoticeid()));
+	    		  map.put("likes", feelRepository.likes(3, clubnotice.get(i).getNoticeid()));
+	    		  
+	    		  Map<String,Object> comments=new HashMap<>();
+	    		  comments.put("id", 0);
+	    		 List<Noticecom> notice= noticecomRepository.noticecom(clubnotice.get(i).getNoticeid());
+	    		 List<Map<String,Object>> reMap=new ArrayList<>();
+	    		 for(int k=0;k<notice.size();k++) {
+	    			 Map<String,Object> coMap=new HashMap<>();
+	    			 Map<String,Object> uMap=new HashMap<>();
+	    			 uMap.put("id", notice.get(k).getUserid());
+	    			 uMap.put("nickName", userRepository.getUserName(notice.get(k).getUserid()));
+	    			 uMap.put("image", imgRepository.getImg(1, notice.get(k).getUserid()));
+	    			 coMap.put("id", notice.get(k).getComid());
+	    			 coMap.put("user", uMap);
+	    			 coMap.put("content",notice.get(k).getContent());
+	    			 coMap.put("writedate", notice.get(k).getWritedate());
+	    			 reMap.add(coMap);
+	    		 }
+	    		 map.put("comments", userFunction.ListToMap(reMap, "id"));
+				
+	    		 list.add(map);
+        	 }
+        	 posts.put("posts",userFunction.ListToMap(list, "id"));
+        	 }
+         posts.put("hasMorePages", hasMorePages);
          
-         return 1;
-      } else {
-         return 0;
-      }
-
+         
+         
+         
+      return posts;
+      
    }
 
    // 4-6 : 그룹 공지글 댓글
@@ -876,4 +1194,242 @@ public class ClubService {
          }
          
       }
+
+	public void deleteGroupUser(int token, int groupid) {
+		
+		clubUserRepository.deleteClubUser(token,groupid);
+		
+		
+	}
+
+	
+	//그룹멤버 정보
+	public Map<String,Object> groupMember(int token, int id, int page) {
+		// TODO Auto-generated method stub
+		Map<String,Object> Map=new HashMap<>();
+	
+		List<Clubuser> cu=clubUserRepository.getclubuser(id);
+		List<Map<String,Object>> list=new ArrayList<>();
+		if(page*10>=cu.size()&&cu.size()>page*10-10) {
+			for(int i=page*10-10;i<cu.size();i++) {
+				Map<String,Object> map=new HashMap<>();
+				int userid=cu.get(i).getUserid();
+				map.put("id", userid);
+				map.put("nickName",userRepository.getUserName(userid));
+				map.put("gender",userRepository.getUser(userid).getGender());
+				map.put("image", imgRepository.getImg(1,userid));
+				map.put("online", false);
+				list.add(map);
+			}
+		}
+		else if(page*10<cu.size()) {
+			for(int i=page*10-10;i<page*10;i++) {
+				Map<String,Object> map=new HashMap<>();
+				int userid=cu.get(i).getUserid();
+				map.put("id", userid);
+				map.put("nickName",userRepository.getUserName(userid));
+				map.put("gender",userRepository.getUser(userid).getGender());
+				map.put("image", imgRepository.getImg(1,userid));
+				map.put("online", false);
+				list.add(map);
+			}
+		}
+		
+	
+		Map.put("members", userFunction.ListToMap(list, "id"));
+		return Map;
+		
+	}
+	
+	
+	
+	//그룹게시글 조회
+	public Map<String,Object> readBoard(int token, int id, int page) {
+		Map<String,Object> posts=new HashMap<>();
+		List<Clubnotice> clubnotice=clubnoticeRepository.getClubnotices(id);
+		
+		List<Map<String,Object>> maplist=new ArrayList<>();
+	
+		if(page*10>=clubnotice.size()&&clubnotice.size()>page*10-10) {
+			for(int i=page*10-10;i<clubnotice.size();i++) {
+				 Map<String,Object> map=new HashMap<>();
+	    		  Map<String,Object> userMap=new HashMap<>();
+	    		  userMap.put("id", clubnotice.get(i).getUserid());
+	    		  userMap.put("nickName",  userRepository.getUserName(clubnotice.get(i).getUserid()));
+	    		  userMap.put("image", imgRepository.getImg(1, clubnotice.get(i).getUserid())); //유저이미지
+	    		  
+	    		  map.put("type", clubnotice.get(i).getType());
+	    		  map.put("id", clubnotice.get(i).getNoticeid());
+	    		  map.put("title", clubnotice.get(i).getTitle());
+	    		  map.put("content", clubnotice.get(i).getContent());
+	    		  map.put("writedate", clubnotice.get(i).getWritedate());
+	    		  map.put("user", userMap);
+	    		  map.put("views", hitRepository.readcounts(3, clubnotice.get(i).getNoticeid()));
+	    		  map.put("likes", feelRepository.likes(3, clubnotice.get(i).getNoticeid()));
+	    		  
+	    		  Map<String,Object> comments=new HashMap<>();
+	    		  comments.put("id", 0);
+	    		 List<Noticecom> notice= noticecomRepository.noticecom(clubnotice.get(i).getNoticeid());
+	    		 List<Map<String,Object>> reMap=new ArrayList<>();
+	    		
+	    		 for(int k=0;k<notice.size();k++) {
+	    			 Map<String,Object> coMap=new HashMap<>();
+	    			 Map<String,Object> uMap=new HashMap<>();
+	    			 uMap.put("id", notice.get(k).getUserid());
+	    			 uMap.put("nickName", userRepository.getUserName(notice.get(k).getUserid()));
+	    			 uMap.put("image", imgRepository.getImg(1, notice.get(k).getUserid()));
+	    			 coMap.put("id", notice.get(k).getComid());
+	    			 coMap.put("user", uMap);
+	    			 coMap.put("content",notice.get(k).getContent());
+	    			 coMap.put("writedate", notice.get(k).getWritedate());
+	    			 reMap.add(coMap);
+	    		 }
+	    		 map.put("comments", userFunction.ListToMap(reMap, "id"));
+	    		 maplist.add(map);
+			}
+			posts.put("posts",userFunction.ListToMap(maplist, "id"));
+		}
+		else if(page*10<clubnotice.size()) {
+			for(int i=page*10-10;i<page*10;i++) {
+				 Map<String,Object> map=new HashMap<>();
+	    		  Map<String,Object> userMap=new HashMap<>();
+	    		  userMap.put("id", clubnotice.get(i).getUserid());
+	    		  userMap.put("nickName",  userRepository.getUserName(clubnotice.get(i).getUserid()));
+	    		  userMap.put("image", imgRepository.getImg(1, clubnotice.get(i).getUserid())); //유저이미지
+	    		  
+	    		  map.put("type", clubnotice.get(i).getType());
+	    		  map.put("id", clubnotice.get(i).getNoticeid());
+	    		  map.put("title", clubnotice.get(i).getTitle());
+	    		  map.put("content", clubnotice.get(i).getContent());
+	    		  map.put("writedate", clubnotice.get(i).getWritedate());
+	    		  map.put("user", userMap);
+	    		  map.put("views", hitRepository.readcounts(3, clubnotice.get(i).getNoticeid()));
+	    		  map.put("likes", feelRepository.likes(3, clubnotice.get(i).getNoticeid()));
+	    		  
+	    		  Map<String,Object> comments=new HashMap<>();
+	    		  comments.put("id", 0);
+	    		 List<Noticecom> notice= noticecomRepository.noticecom(clubnotice.get(i).getNoticeid());
+	    		 List<Map<String,Object>> reMap=new ArrayList<>();
+	    		 for(int k=0;k<notice.size();k++) {
+	    			 Map<String,Object> coMap=new HashMap<>();
+	    			 Map<String,Object> uMap=new HashMap<>();
+	    			 uMap.put("id", notice.get(k).getUserid());
+	    			 uMap.put("nickName", userRepository.getUserName(notice.get(k).getUserid()));
+	    			 uMap.put("image", imgRepository.getImg(1, notice.get(k).getUserid()));
+	    			 coMap.put("id", notice.get(k).getComid());
+	    			 coMap.put("user", uMap);
+	    			 coMap.put("content",notice.get(k).getContent());
+	    			 coMap.put("writedate", notice.get(k).getWritedate());
+	    			 reMap.add(coMap);
+	    		 }
+	    		 map.put("comments", userFunction.ListToMap(reMap, "id"));
+	    		 maplist.add(map);
+			}
+			posts.put("posts",userFunction.ListToMap(maplist, "id"));			
+		}
+		System.out.println(clubnotice.size());
+		Boolean hasMorePages=true;
+		if(clubnotice.size()/10+1==page)
+			hasMorePages=false;
+		posts.put("hasMorePages", hasMorePages);
+	
+		return posts;
+		
+	}
+
+	public int addReadCount(int userid, int id) {
+		// TODO Auto-generated method stub
+		
+		List<Hit> list=hitRepository.addReadCount(3, id, userid);
+		if(list.size()==0) {
+			Hit h=new Hit();
+			h.setGubun(3);
+			h.setHittime(new Date());
+			h.setId(id);
+			h.setUserid(userid);
+			hitRepository.save(h);
+			return 1;
+		}
+		else {
+			return 0;
+		}
+	}
+
+	//좋아요 수 추가하기
+	public void addLike(int token, int id, Boolean liked) {
+		// TODO Auto-generated method stub
+		if(liked==true) {
+			Feel feel=new Feel();
+			
+			feel.setGubun(3);
+			feel.setId(id);
+			feel.setType(1);
+			feel.setUserid(token);
+			feel.setWritedate(new Date());
+			feelRepository.save(feel);
+		}
+		else {
+			feelRepository.deleteByGubunAndIdAndUseridAndType(3, id, token, 1);
+		}
+	}
+	
+	public void addComment(int token, int id, String content) {
+		// TODO Auto-generated method stub
+	
+		Noticecom nc=new Noticecom();
+		nc.setAttendyn(false);
+		nc.setComid(0);
+		nc.setContent(content);
+		nc.setUserid(token);
+		nc.setNoticeid(id);
+		nc.setWritedate(new Date());
+		noticecomRepository.save(nc);
+		
+		Map<String,Object> reMap=new HashMap<>();
+		
+		/*	"DB에 댓글 등록후 해당 게시글의 댓글 전체 반환
+		comments: { 
+		    id(댓글ID): { 
+		        id: Integer,  // 댓글 id
+		        user: {
+		            id: Integer,  // 댓글 작성자 id
+		            nickName: String,  // 댓글 작성자 닉네임
+		            image: String,  // 댓글 작성자 프사 url
+		        },
+		        content: String  // 댓글 내용
+		        writedate: Date  // 댓글 작성일
+		    },
+		    ...
+		}"
+*/	
+		List<Noticecom> nlist=noticecomRepository.noticecom(id);
+		List<Map<String,Object>> commentList=new ArrayList<>();
+		
+			for(int i=0;i<nlist.size();i++) {
+				Map<String,Object> map=new HashMap<>();
+				Map<String,Object> uMap=new HashMap<>();
+				uMap.put("id", nlist.get(i).getUserid());
+				uMap.put("nickName", userRepository.getUserName(nlist.get(i).getUserid()));
+				uMap.put("image",imgRepository.getImg(1, nlist.get(i).getUserid()));
+				
+				map.put("id", nlist.get(i).getComid());
+				map.put("user",uMap);
+				map.put("content", nlist.get(i).getContent());
+				map.put("writedate",nlist.get(i).getWritedate());
+				commentList.add(map);
+			}
+			reMap.put("comments", userFunction.ListToMap(commentList, "id"));
+		
+		}
 }
+
+
+
+
+
+
+
+
+
+
+
