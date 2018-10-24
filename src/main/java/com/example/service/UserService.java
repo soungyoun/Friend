@@ -36,8 +36,6 @@ import com.example.repository.UserRepository;
 public class UserService {
 
    @Autowired
-   private ClubService clubService;
-   @Autowired
    private ChatService chatService;
    @Autowired
    private UserRepository userRepository;
@@ -92,7 +90,6 @@ public class UserService {
             popUserMap.put(u.getUserid(), UserMap);
             
          } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
          }
       }
@@ -128,7 +125,6 @@ public class UserService {
           Map<String, Object> me = loginService.getUserInfo(seq, false);
           myPage.put("me", me);
           me.put("isFriend", isFriend);
-          System.out.println(friendRepository.isCurious(userid, seq, 4));
           me.put("isCurious", friendRepository.isCurious(userid, seq, 4) ==null ? false : true);
           userid = seq;
       } else if (seq != null)
@@ -145,9 +141,9 @@ public class UserService {
       }
       
       if (clubUserRepository.clubCount(userid) % 10 == 0) {
-         clubsCount = clubUserRepository.clubCount(userid) / 10;
+         clubsCount = clubUserRepository.getUserClubinfo(userid, 2).size() / 10;
       } else {
-         clubsCount = clubUserRepository.clubCount(userid) / 10 + 1;
+         clubsCount = clubUserRepository.getUserClubinfo(userid, 2).size() / 10 + 1;
       }
       int firstNum = 0;
 
