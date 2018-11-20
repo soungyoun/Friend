@@ -18,7 +18,7 @@ public interface ClubUserRepository extends JpaRepository<Clubuser, Integer>{
    public int getMemberCount(@Param("clubid") int clubid);
    
    //해당그룹의 유저들 정보
-   @Query(value="select c.userid from clubuser c where c.clubid=:clubid",nativeQuery=true)
+   @Query(value="select c.userid from clubuser c where c.clubid=:clubid and c.userstate=2",nativeQuery=true)
    public List<Integer> getMemberId(@Param("clubid") int clubid);
    @Query(value="select * from clubuser where clubid=:clubid",nativeQuery=true)
    public List<Clubuser> getclubuser(@Param("clubid") int clubid);
