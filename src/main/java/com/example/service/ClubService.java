@@ -238,6 +238,7 @@ public class ClubService {
       List<List<Clubuser>> result = new ArrayList<>();
       for (int i = 0; i < clubList.size(); i++) {
          predicates.add(builder.equal(root.get("clubid"), clubList.get(i).getClubid()));
+     //    predicates.add(builder.equal(root.get("userstate"), 2));
          query.select(root.get("clubid")).where(predicates.toArray(new Predicate[] {}));
 
          typedQuery = entityManager.createQuery(query);
